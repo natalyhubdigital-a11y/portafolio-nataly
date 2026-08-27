@@ -1,0 +1,971 @@
+<title>Nataly Suárez</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Fraunces:ital,opsz,wght@1,9..144,500&display=swap');
+
+  :root {
+    /* Colors — Sequel tokens, verbatim */
+    --color-void-black: #000000;
+    --color-pure-white: #ffffff;
+    --color-charcoal: #202020;
+    --color-graphite: #333333;
+    --color-lamp-cream: #f5f5f0;
+    --color-smoke: #999999;
+
+    /* Fonts — VisueltPro/Bradford are not distributable; using the
+       documented substitutes where available on Google Fonts. Inter is
+       Sequel's own listed VisueltPro substitute. Bradford's listed
+       substitutes (Canela / Tiempos Headline / GT Super) aren't on
+       Google Fonts, so Fraunces italic stands in — same job: a display
+       serif used only in italic for the one emotional payoff word. */
+    --font-visueltpro: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --font-bradford: 'Fraunces', ui-serif, Georgia, serif;
+
+    /* Type scale — exact tokens */
+    --text-label-sm: 11px;   --leading-label-sm: 1.5;    --tracking-label-sm: 0.55px;
+    --text-body: 16px;       --leading-body: 1.5;
+    --text-body-lg: 20px;    --leading-body-lg: 1.5;
+    --text-subheading: 30px; --leading-subheading: 1.2;  --tracking-subheading: -0.75px;
+    --text-heading: 54px;    --leading-heading: 1.2;
+    --text-heading-lg: 57px; --leading-heading-lg: 1;    --tracking-heading-lg: -2.85px;
+    --text-display: 128px;   --leading-display: 1;       --tracking-display: -3.2px;
+
+    /* Weights */
+    --font-weight-light: 300;
+    --font-weight-regular: 400;
+    --font-weight-medium: 500;
+
+    /* Spacing scale — exact tokens, nothing outside this set */
+    --spacing-4: 4px;   --spacing-8: 8px;   --spacing-12: 12px; --spacing-16: 16px;
+    --spacing-20: 20px; --spacing-24: 24px; --spacing-28: 28px; --spacing-32: 32px;
+    --spacing-40: 40px; --spacing-64: 64px; --spacing-80: 80px; --spacing-96: 96px;
+
+    /* Layout */
+    --page-max-width: 1200px;
+    --element-gap: 16px;
+
+    /* Radii — named, exact */
+    --radius-cards: 10px;
+    --radius-badges: 9999px;
+    --radius-inputs: 0px;
+    --radius-buttons: 9999px;
+    --radius-playbutton: 50%;
+
+    /* Shadows — exact */
+    --shadow-xl: rgba(0, 0, 0, 0.35) 0px 10px 30px 0px, rgba(255, 255, 255, 0.08) 0px 1px 0px 0px inset;
+    --shadow-lg: rgba(0, 0, 0, 0.15) 0px 4px 20px 0px;
+
+    /* Motion — exact easing from the system */
+    --ease-sequel: cubic-bezier(0.625, 0.05, 0, 1);
+
+    /* Photography */
+    --hero-photo: url('images/hero.jpg');
+    --about-photo: url('images/about.jpg');
+  }
+
+  * { box-sizing: border-box; }
+
+  html { scroll-padding-top: 88px; }
+  html, body { background: var(--color-void-black); }
+
+  body {
+    margin: 0;
+    color: var(--color-pure-white);
+    font-family: var(--font-visueltpro);
+    font-weight: var(--font-weight-regular);
+    font-size: var(--text-body);
+    line-height: var(--leading-body);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::selection { background: var(--color-lamp-cream); color: var(--color-void-black); }
+
+  h1, h2, h3 {
+    font-family: var(--font-visueltpro);
+    font-weight: var(--font-weight-light);
+    color: var(--color-pure-white);
+    margin: 0;
+    text-wrap: balance;
+  }
+
+  em.payoff {
+    font-family: var(--font-bradford);
+    font-style: italic;
+    font-weight: var(--font-weight-medium);
+    color: var(--color-pure-white);
+  }
+
+  a { color: inherit; text-decoration: none; }
+  a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible {
+    outline: 2px solid var(--color-lamp-cream);
+    outline-offset: 3px;
+  }
+
+  .label {
+    font-family: var(--font-visueltpro);
+    font-size: var(--text-label-sm);
+    line-height: var(--leading-label-sm);
+    letter-spacing: var(--tracking-label-sm);
+    text-transform: uppercase;
+    font-weight: var(--font-weight-medium);
+    color: var(--color-smoke);
+  }
+
+  .wrap {
+    max-width: var(--page-max-width);
+    margin: 0 auto;
+    padding: 0 var(--spacing-24);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition: none !important; }
+  }
+
+  .reveal {
+    opacity: 0;
+    transform: translateY(var(--spacing-16));
+    transition: opacity 0.6s var(--ease-sequel), transform 0.6s var(--ease-sequel);
+  }
+  .reveal.in { opacity: 1; transform: none; }
+
+  /* ================= NAV ================= */
+  .nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 30;
+    background: transparent;
+    transition: background 0.3s var(--ease-sequel);
+    padding: var(--spacing-24) 0;
+  }
+  .nav.scrolled { background: var(--color-void-black); padding: var(--spacing-16) 0; }
+  .nav-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    max-width: var(--page-max-width);
+    margin: 0 auto;
+    padding: 0 var(--spacing-24);
+    gap: var(--spacing-16);
+  }
+  .wordmark {
+    font-size: var(--text-body);
+    font-weight: var(--font-weight-medium);
+    letter-spacing: 0.03em;
+  }
+  .nav-links {
+    display: flex;
+    gap: var(--spacing-16);
+    list-style: none;
+    margin: 0; padding: 0;
+  }
+  .nav-links a {
+    font-size: 15px;
+    font-weight: var(--font-weight-medium);
+    color: var(--color-pure-white);
+    padding-bottom: 2px;
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.2s var(--ease-sequel), color 0.2s var(--ease-sequel);
+  }
+  .nav-links a:hover { border-color: var(--color-lamp-cream); color: var(--color-lamp-cream); }
+  @media (max-width: 760px) { .nav-links { display: none; } }
+
+  /* ================= BUTTONS ================= */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    font-family: var(--font-visueltpro);
+    font-weight: var(--font-weight-medium);
+    font-size: var(--text-body);
+    line-height: 44px;
+    border-radius: var(--radius-buttons);
+    padding: 0px var(--spacing-24);
+    transition: transform 0.2s var(--ease-sequel), background 0.2s var(--ease-sequel), opacity 0.2s var(--ease-sequel);
+    cursor: pointer;
+    border: none;
+  }
+  .btn:hover { transform: translateY(-1px); }
+  .btn-primary {
+    background: var(--color-lamp-cream);
+    color: var(--color-void-black);
+    box-shadow: var(--shadow-lg);
+  }
+  .btn-primary:hover { opacity: 0.92; }
+  .btn-ghost {
+    background: transparent;
+    color: var(--color-pure-white);
+    border: 1px solid var(--color-pure-white);
+    padding: 0px var(--spacing-20);
+  }
+  .btn-ghost:hover { background: rgba(255,255,255,0.06); }
+  .btn:disabled { cursor: not-allowed; opacity: 0.6; }
+  .btn:disabled:hover { transform: none; }
+
+  /* ================= HERO ================= */
+  .hero {
+    position: relative;
+    min-height: 100svh;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    background-image: var(--hero-photo);
+    background-size: cover;
+    background-position: center 22%;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.35) 40%, rgba(0,0,0,0.05) 65%);
+  }
+  .hero-inner { position: relative; z-index: 2; }
+  .hero-inner {
+    padding: 0 var(--spacing-24) var(--spacing-64);
+    max-width: var(--page-max-width);
+    margin: 0 auto;
+    width: 100%;
+  }
+  .hero h1 {
+    font-size: clamp(2.6rem, 9vw, 8rem);
+    line-height: var(--leading-display);
+    letter-spacing: -0.025em; /* ratio of the --tracking-display token (-3.2px / 128px) */
+    max-width: 16ch;
+  }
+  .hero .sub {
+    margin-top: var(--spacing-24);
+    max-width: 46ch;
+    font-size: var(--text-body-lg);
+    line-height: var(--leading-body-lg);
+    color: var(--color-smoke);
+  }
+  .stat-strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-8) var(--spacing-32);
+    margin-top: var(--spacing-32);
+  }
+  .stat-strip .item { display: flex; align-items: baseline; gap: var(--spacing-8); }
+  .stat-strip .num {
+    font-size: var(--text-body);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-pure-white);
+  }
+  .cta-row { display: flex; gap: var(--spacing-16); margin-top: var(--spacing-40); flex-wrap: wrap; }
+
+  /* ================= MARQUEE ================= */
+  .marquee-band {
+    border-top: 1px solid var(--color-graphite);
+    border-bottom: 1px solid var(--color-graphite);
+    background: var(--color-void-black);
+    overflow: hidden;
+    padding: var(--spacing-20) 0;
+  }
+  .marquee-track {
+    display: flex;
+    width: max-content;
+    animation: leagues-scrolling 45s linear infinite;
+  }
+  .marquee-track span {
+    display: inline-flex;
+    align-items: center;
+    font-size: var(--text-label-sm);
+    letter-spacing: var(--tracking-label-sm);
+    text-transform: uppercase;
+    font-weight: var(--font-weight-medium);
+    color: var(--color-smoke);
+    white-space: nowrap;
+    padding: 0 var(--spacing-24);
+  }
+  .marquee-track span::after { content: '·'; margin-left: var(--spacing-24); color: var(--color-graphite); }
+  @keyframes leagues-scrolling { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+  @media (prefers-reduced-motion: reduce) { .marquee-track { animation: none; } }
+
+  /* ================= SECTIONS ================= */
+  section.band { padding: var(--spacing-96) 0; }
+  .band-charcoal { background: var(--color-charcoal); }
+  .heading-pair h2 {
+    font-size: clamp(2rem, 5vw, var(--text-heading-lg));
+    line-height: var(--leading-heading-lg);
+    letter-spacing: -0.05em; /* ratio of the --tracking-heading-lg token (-2.85px / 57px) */
+    font-weight: var(--font-weight-light);
+  }
+  .heading-pair h2 .line { display: block; }
+
+  /* ---- about ---- */
+  .about-grid {
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: var(--spacing-64);
+    margin-top: var(--spacing-64);
+    align-items: start;
+  }
+  .about-copy p {
+    font-size: var(--text-body-lg);
+    line-height: var(--leading-body-lg);
+    color: var(--color-smoke);
+    max-width: 52ch;
+  }
+  .about-copy p + p { margin-top: var(--spacing-16); }
+  .about-meta {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-8);
+    margin-top: var(--spacing-32);
+  }
+  .about-meta .row { display: flex; gap: var(--spacing-16); }
+  .about-meta .k { width: 120px; flex: none; }
+  .about-meta .v { color: var(--color-pure-white); font-size: var(--text-body); }
+
+  .card {
+    background: var(--color-charcoal);
+    border-radius: var(--radius-cards);
+    padding: var(--spacing-32);
+  }
+  .card h3 {
+    font-size: var(--text-body);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-pure-white);
+    margin-bottom: var(--spacing-20);
+  }
+  .chip-group + .chip-group { margin-top: var(--spacing-20); }
+  .chip-group .label { display: block; margin-bottom: var(--spacing-8); }
+  .chip-row { display: flex; flex-wrap: wrap; gap: var(--spacing-8); }
+  .chip {
+    font-size: var(--text-label-sm);
+    letter-spacing: var(--tracking-label-sm);
+    padding: var(--spacing-8) var(--spacing-16);
+    border-radius: var(--radius-badges);
+    background: rgba(200,200,200,0.1);
+    -webkit-backdrop-filter: blur(20px) saturate(1.4);
+    backdrop-filter: blur(20px) saturate(1.4);
+    color: var(--color-pure-white);
+    box-shadow: var(--shadow-xl);
+  }
+
+  @media (max-width: 760px) {
+    .about-grid { grid-template-columns: 1fr; gap: var(--spacing-32); }
+  }
+
+  .about-photo {
+    width: 100%;
+    max-width: 320px;
+    aspect-ratio: 4 / 5;
+    border-radius: var(--radius-cards);
+    overflow: hidden;
+    margin-bottom: var(--spacing-32);
+    background-image: var(--about-photo);
+    background-size: cover;
+    background-position: center;
+    filter: sepia(0.12) saturate(0.9) contrast(1.03) brightness(0.94);
+  }
+
+  .band-sub {
+    margin-top: var(--spacing-16);
+    font-size: var(--text-body-lg);
+    line-height: var(--leading-body-lg);
+    color: var(--color-smoke);
+    max-width: 52ch;
+  }
+
+  /* ---- timeline ---- */
+  .timeline {
+    list-style: none;
+    margin: var(--spacing-64) 0 0;
+    padding: 0;
+    position: relative;
+  }
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 96px;
+    top: 6px;
+    bottom: 6px;
+    width: 1px;
+    background: var(--color-graphite);
+  }
+  .t-item {
+    position: relative;
+    display: grid;
+    grid-template-columns: 96px 1fr;
+    gap: var(--spacing-24);
+    padding: var(--spacing-24) 0;
+    border-top: 1px solid var(--color-graphite);
+  }
+  .t-item:first-child { border-top: none; padding-top: 0; }
+  .t-item::after {
+    content: '';
+    position: absolute;
+    left: 91px;
+    top: var(--spacing-4);
+    width: 11px;
+    height: 11px;
+    border-radius: var(--radius-playbutton);
+    background: var(--color-void-black);
+    border: 1px solid var(--color-pure-white);
+  }
+  .t-item.now::after { background: var(--color-pure-white); }
+  .t-year {
+    font-size: var(--text-body);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-smoke);
+    text-align: right;
+    padding-top: 2px;
+  }
+  .t-body h3 {
+    font-size: var(--text-body-lg);
+    font-weight: var(--font-weight-regular);
+    line-height: 1.35;
+    color: var(--color-pure-white);
+  }
+  .t-body p {
+    margin-top: var(--spacing-8);
+    font-size: var(--text-body);
+    color: var(--color-smoke);
+    max-width: 60ch;
+  }
+  .t-body .chip { margin-top: var(--spacing-12); display: inline-block; }
+  @media (max-width: 640px) {
+    .timeline::before { left: 5px; }
+    .t-item { grid-template-columns: 1fr; gap: var(--spacing-8); padding-left: var(--spacing-20); }
+    .t-item::after { left: 0px; top: var(--spacing-4); }
+    .t-year { text-align: left; order: -1; }
+  }
+
+  /* ---- services ---- */
+  .services-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: var(--spacing-16);
+    margin-top: var(--spacing-64);
+  }
+  .card p {
+    margin-top: var(--spacing-12);
+    font-size: var(--text-body);
+    color: var(--color-smoke);
+  }
+
+  /* ---- work ---- */
+  .work-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-16);
+    margin-top: var(--spacing-64);
+  }
+  .work-card {
+    position: relative;
+    border-radius: var(--radius-cards);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    min-height: 320px;
+    padding: var(--spacing-24);
+  }
+  .work-card::before {
+    content: '';
+    position: absolute; inset: 0;
+    background-image: var(--photo);
+    background-size: cover;
+    background-position: center;
+    filter: sepia(0.18) saturate(0.82) contrast(1.05) brightness(0.82);
+  }
+  .work-card::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.15) 55%, rgba(0,0,0,0.05) 100%);
+  }
+  .work-badge {
+    position: absolute;
+    top: var(--spacing-16); right: var(--spacing-16);
+    z-index: 2;
+    font-size: var(--text-label-sm);
+    letter-spacing: var(--tracking-label-sm);
+    text-transform: uppercase;
+    font-weight: var(--font-weight-medium);
+    padding: var(--spacing-8) var(--spacing-16);
+    border-radius: var(--radius-badges);
+    background: rgba(200,200,200,0.1);
+    -webkit-backdrop-filter: blur(20px) saturate(1.4);
+    backdrop-filter: blur(20px) saturate(1.4);
+    box-shadow: var(--shadow-xl);
+  }
+  .work-body { position: relative; z-index: 2; }
+  .work-body h3 {
+    font-size: 21px;
+    font-weight: var(--font-weight-medium);
+    color: var(--color-pure-white);
+  }
+  .work-body p {
+    margin-top: var(--spacing-8);
+    font-size: var(--text-body);
+    color: var(--color-smoke);
+  }
+  .work-toggle {
+    position: relative;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-8);
+    margin-top: var(--spacing-16);
+    background: transparent;
+    border: 1px solid var(--color-pure-white);
+    border-radius: var(--radius-buttons);
+    color: var(--color-pure-white);
+    font-family: var(--font-visueltpro);
+    font-size: var(--text-label-sm);
+    letter-spacing: var(--tracking-label-sm);
+    text-transform: uppercase;
+    font-weight: var(--font-weight-medium);
+    line-height: 36px;
+    padding: 0 var(--spacing-16);
+    cursor: pointer;
+    transition: background 0.2s var(--ease-sequel);
+  }
+  .work-toggle:hover { background: rgba(255,255,255,0.08); }
+  .work-toggle .plus { transition: transform 0.3s var(--ease-sequel); }
+  .work-card.is-open .work-toggle .plus { transform: rotate(45deg); }
+
+  .work-detail {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.4s var(--ease-sequel);
+  }
+  .work-card.is-open .work-detail { grid-template-rows: 1fr; }
+  .work-detail-inner { overflow: hidden; }
+  .work-detail-inner p {
+    padding-top: var(--spacing-16);
+    font-size: var(--text-body);
+    line-height: var(--leading-body);
+    color: var(--color-pure-white);
+    max-width: 46ch;
+  }
+
+  @media (max-width: 700px) { .work-grid { grid-template-columns: 1fr; } }
+
+  .work-note {
+    margin-top: var(--spacing-24);
+    font-size: var(--text-label-sm);
+    letter-spacing: var(--tracking-label-sm);
+    color: var(--color-graphite);
+    text-transform: uppercase;
+  }
+
+  /* ---- contact ---- */
+  .contact-grid {
+    display: grid;
+    grid-template-columns: 0.8fr 1.2fr;
+    gap: var(--spacing-64);
+    margin-top: var(--spacing-64);
+  }
+  .contact-direct { display: flex; flex-direction: column; gap: var(--spacing-24); }
+  .contact-direct .row .k { display: block; margin-bottom: var(--spacing-4); }
+  .contact-direct .row .v { font-size: var(--text-body-lg); }
+  .contact-direct .row a { border-bottom: 1px solid var(--color-graphite); }
+  .contact-direct .row a:hover { border-color: var(--color-lamp-cream); color: var(--color-lamp-cream); }
+
+  .cform { display: flex; flex-direction: column; gap: var(--spacing-20); }
+  .cform .field label {
+    display: block;
+    margin-bottom: var(--spacing-8);
+  }
+  .cform input, .cform textarea, .cform select {
+    width: 100%;
+    background: transparent;
+    border: 1px solid var(--color-graphite);
+    border-radius: var(--radius-inputs);
+    color: var(--color-pure-white);
+    font-family: var(--font-visueltpro);
+    font-size: var(--text-body);
+    padding: var(--spacing-12) var(--spacing-16);
+  }
+  .cform input::placeholder, .cform textarea::placeholder { color: var(--color-smoke); }
+  .cform input:focus, .cform textarea:focus, .cform select:focus { border-color: var(--color-pure-white); }
+  .cform textarea { resize: vertical; min-height: 120px; }
+  .cform-note { font-size: var(--text-label-sm); color: var(--color-graphite); text-transform: uppercase; letter-spacing: var(--tracking-label-sm); }
+
+  @media (max-width: 760px) { .contact-grid { grid-template-columns: 1fr; } }
+
+  /* ================= FOOTER ================= */
+  footer { padding: var(--spacing-96) 0 var(--spacing-64); border-top: 1px solid var(--color-graphite); }
+  .foot-headline {
+    font-size: clamp(1.8rem, 6vw, 4rem);
+    font-weight: var(--font-weight-light);
+    line-height: var(--leading-heading-lg);
+    letter-spacing: -0.02em;
+    max-width: 18ch;
+  }
+  .foot-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-8) var(--spacing-24);
+    margin-top: var(--spacing-40);
+    font-size: var(--text-body);
+  }
+  .foot-links a { border-bottom: 1px solid var(--color-graphite); }
+  .foot-links a:hover { border-color: var(--color-lamp-cream); color: var(--color-lamp-cream); }
+  .foot-copy {
+    margin-top: var(--spacing-64);
+    font-size: var(--text-label-sm);
+    letter-spacing: var(--tracking-label-sm);
+    text-transform: uppercase;
+    color: var(--color-graphite);
+  }
+</style>
+
+<header class="nav" id="nav">
+  <div class="nav-row">
+    <a href="#top" class="wordmark">NS</a>
+    <ul class="nav-links">
+      <li><a href="#acerca">Acerca</a></li>
+      <li><a href="#trabajo">Trabajo</a></li>
+      <li><a href="#contacto">Contacto</a></li>
+    </ul>
+    <a class="btn btn-primary" href="#contacto" style="line-height:40px;padding:0 var(--spacing-20);font-size:15px;">Hablemos</a>
+  </div>
+</header>
+
+<main>
+  <section class="hero" id="top">
+    <div class="hero-inner">
+      <h1>Nataly Suárez</h1>
+      <p class="sub">Diseño sistemas de CRM, automation y growth que convierten operación dispersa en pipeline claro, medible y escalable.</p>
+
+      <div class="stat-strip">
+        <div class="item"><span class="num">60%</span><span class="label">menos trabajo manual</span></div>
+        <div class="item"><span class="num">55%</span><span class="label">más leads en 4 meses</span></div>
+        <div class="item"><span class="num">4.2x</span><span class="label">ROAS temporada alta</span></div>
+        <div class="item"><span class="num">110%</span><span class="label">cumplimiento de revenue</span></div>
+      </div>
+
+      <div class="cta-row">
+        <a class="btn btn-primary" href="#trabajo">Ver trabajo</a>
+        <a class="btn btn-ghost" href="#contacto">Hablemos</a>
+      </div>
+    </div>
+  </section>
+
+  <div class="marquee-band" aria-hidden="true">
+    <div class="marquee-track">
+      <span>Koopa</span><span>Sheraton</span><span>UDT</span><span>Global Education and Migration</span><span>Escala SaaS</span><span>Aivo</span><span>PEGASI</span><span>Dev Senior Code</span><span>Macin Home</span>
+      <span>Koopa</span><span>Sheraton</span><span>UDT</span><span>Global Education and Migration</span><span>Escala SaaS</span><span>Aivo</span><span>PEGASI</span><span>Dev Senior Code</span><span>Macin Home</span>
+    </div>
+  </div>
+
+  <section class="band" id="acerca">
+    <div class="wrap">
+      <div class="heading-pair reveal">
+        <h2><span class="line">Seis años construyendo sistemas que llevan la operación a otro nivel.</span></h2>
+      </div>
+
+      <div class="about-grid reveal">
+        <div class="about-copy">
+          <div class="about-photo"></div>
+          <p>Especialista en marketing digital, growth marketing y customer experience. Acompaño a empresas B2B y B2C en la implementación de CRM, automatización de marketing y gestión de campañas — con un perfil estratégico, orientado a resultados medibles.</p>
+          <p>Técnica en Investigación de Mercados (SENA, 2009) y en formación continua de IA aplicada al marketing digital desde 2024, integrada directamente a cada proyecto activo.</p>
+
+          <div class="about-meta">
+            <div class="row"><span class="label k">Base</span><span class="v">Bogotá D.C., Colombia — remoto</span></div>
+            <div class="row"><span class="label k">Idiomas</span><span class="v">Español nativo · Inglés B2</span></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Stack</h3>
+          <div class="chip-group">
+            <span class="label">CRM</span>
+            <div class="chip-row">
+              <span class="chip">HubSpot</span><span class="chip">Escala</span><span class="chip">Pipedrive</span><span class="chip">Monday.com</span>
+            </div>
+          </div>
+          <div class="chip-group">
+            <span class="label">Automatización</span>
+            <div class="chip-row">
+              <span class="chip">n8n</span><span class="chip">Make</span><span class="chip">ActiveCampaign</span>
+            </div>
+          </div>
+          <div class="chip-group">
+            <span class="label">Chatbots</span>
+            <div class="chip-row">
+              <span class="chip">ManyChat</span><span class="chip">WhatsApp API</span><span class="chip">Aivo</span>
+            </div>
+          </div>
+          <div class="chip-group">
+            <span class="label">Paid media &amp; analítica</span>
+            <div class="chip-row">
+              <span class="chip">Google Ads</span><span class="chip">Meta Ads</span><span class="chip">GA4</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="band band-charcoal" id="trabajo">
+    <div class="wrap">
+      <div class="heading-pair reveal">
+        <h2><span class="line">Sistemas en producción, no solo en papel.</span></h2>
+      </div>
+
+      <div class="work-grid reveal">
+        <div class="work-card" style="--photo:url('images/work-koopa.jpg')">
+          <span class="work-badge">CRM &amp; Agente IA</span>
+          <div class="work-body">
+            <h3>Koopa — pipeline completo, automatizado</h3>
+            <p>n8n · Make · ManyChat · WhatsApp Business API — 2025, activo</p>
+          </div>
+          <button class="work-toggle" aria-expanded="false" aria-controls="detail-koopa" onclick="toggleWork(this)">
+            <span class="plus">+</span><span class="txt">Ver más</span>
+          </button>
+          <div class="work-detail" id="detail-koopa">
+            <div class="work-detail-inner">
+              <p>Diseño e implementación de flujos de automatización end-to-end con n8n y Make. Chatbots en ManyChat integrados con WhatsApp Business API y CRM. Gestión de campañas multicanal y redes sociales orientadas a conversión. Resultado: pipeline de ventas completamente automatizado, −60% trabajo manual, +55% leads calificados en los primeros 4 meses.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="work-card" style="--photo:url('images/work-sheraton.jpg')">
+          <span class="work-badge">Fidelización</span>
+          <div class="work-body">
+            <h3>Sheraton — CRM para huéspedes recurrentes</h3>
+            <p>ROAS 4.2x en temporada alta — 2024, activo</p>
+          </div>
+          <button class="work-toggle" aria-expanded="false" aria-controls="detail-sheraton" onclick="toggleWork(this)">
+            <span class="plus">+</span><span class="txt">Ver más</span>
+          </button>
+          <div class="work-detail" id="detail-sheraton">
+            <div class="work-detail-inner">
+              <p>Implementación de CRM para gestión de huéspedes frecuentes y automatización de comunicaciones post-estadía. Flujos de email marketing de bienvenida, reactivación y upselling. Campañas de temporada en Google Ads y Meta Ads. Resultado: +18% retención de huéspedes recurrentes, ROAS de 4.2x en temporada alta, +2.300 registros calificados en 5 meses.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="work-card" style="--photo:url('images/work-udt.jpg')">
+          <span class="work-badge">Marketing &amp; SEO/GEO</span>
+          <div class="work-body">
+            <h3>UDT &amp; Global Education and Migration — marca propia</h3>
+            <p>Sitios, agentes de IA, ManyChat — 2026, junto a Dorian</p>
+          </div>
+          <button class="work-toggle" aria-expanded="false" aria-controls="detail-udt" onclick="toggleWork(this)">
+            <span class="plus">+</span><span class="txt">Ver más</span>
+          </button>
+          <div class="work-detail" id="detail-udt">
+            <div class="work-detail-inner">
+              <p>Marketing digital y automatización para dos marcas propias, junto a Dorian, desde febrero 2026: University Discovery Tours y Global Education and Migration. Sitios web con posicionamiento SEO y GEO, agentes inteligentes y ManyChat para atención y calificación de leads.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="work-card" style="--photo:url('images/work-escala.jpg')">
+          <span class="work-badge">Key Account</span>
+          <div class="work-body">
+            <h3>Escala SaaS — 110% de cumplimiento de revenue</h3>
+            <p>Gestión de cuentas estratégicas — 2022–2023</p>
+          </div>
+          <button class="work-toggle" aria-expanded="false" aria-controls="detail-escala" onclick="toggleWork(this)">
+            <span class="plus">+</span><span class="txt">Ver más</span>
+          </button>
+          <div class="work-detail" id="detail-escala">
+            <div class="work-detail-inner">
+              <p>Key Account Manager — gestión de cuentas estratégicas y desarrollo de relaciones a largo plazo. Diseño e implementación de embudos de ventas y planes de crecimiento. Integración y parametrización de CRM para equipos comerciales. Resultado: +28% retención de clientes, 110% de cumplimiento de objetivos de revenue en Q3 2023, −35% tiempo de respuesta al cliente.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="work-note reveal">Fotografía: Pexels, uso libre — tratamiento cálido y desaturado aplicado para igualar el sistema.</p>
+    </div>
+  </section>
+
+  <section class="band" id="formas">
+    <div class="wrap">
+      <div class="heading-pair reveal">
+        <h2><span class="line">Formas en que podemos trabajar juntas</span></h2>
+        <p class="band-sub">Si algo de esto encaja con lo que necesitas, hablemos.</p>
+      </div>
+
+      <div class="services-grid reveal">
+        <div class="card">
+          <h3>CRM y automatización de lifecycle</h3>
+          <p>Implementación y administración de CRM (HubSpot, Escala, Pipedrive, Monday.com), flujos con n8n y Make, scoring y nurturing.</p>
+        </div>
+        <div class="card">
+          <h3>Chatbots y mensajería con IA</h3>
+          <p>ManyChat, WhatsApp Business API, flujos conversacionales integrados a CRM — calificación automática de leads.</p>
+        </div>
+        <div class="card">
+          <h3>Fidelización y gestión de socios</h3>
+          <p>Base de datos de miembros, campañas de retención y reactivación — el modelo que ya operé para Sheraton.</p>
+        </div>
+        <div class="card">
+          <h3>Paid media y analítica</h3>
+          <p>Google Ads, Meta Ads, GA4, GTM, Looker Studio — de la campaña al dashboard.</p>
+        </div>
+        <div class="card">
+          <h3>Auditoría de CRM hygiene + lead scoring</h3>
+          <p>Diagnóstico de salud del funnel, campos críticos, nomenclatura y madurez de datos.</p>
+        </div>
+        <div class="card">
+          <h3>Capacitación en IA para equipos no técnicos</h3>
+          <p>Talleres de adopción (Claude, Claude Code) para profesionales de empresa, de cero a aplicación real.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="band band-charcoal" id="registro">
+    <div class="wrap">
+      <div class="heading-pair reveal">
+        <h2><span class="line">Para el registro</span></h2>
+        <p class="band-sub">Hitos reales de mi trayectoria, con la fecha en que empezaron.</p>
+      </div>
+
+      <ol class="timeline reveal">
+        <li class="t-item now">
+          <span class="t-year">2026</span>
+          <div class="t-body">
+            <h3>Emprendí junto a Dorian: University Discovery Tours y Global Education and Migration</h3>
+            <p>Marketing digital, automatizaciones, sitios con SEO y GEO, agentes inteligentes y ManyChat.</p>
+            <span class="chip">UDT · GEM</span>
+          </div>
+        </li>
+        <li class="t-item">
+          <span class="t-year">2025</span>
+          <div class="t-body">
+            <h3>Mi cliente más ambicioso hasta ahora: pipeline completo con agente de IA</h3>
+            <p>Automatización end-to-end del proceso de ventas.</p>
+            <span class="chip">Koopa</span>
+          </div>
+        </li>
+        <li class="t-item now">
+          <span class="t-year">2024</span>
+          <div class="t-body">
+            <h3>Llevé CRM y automatización a la industria hotelera</h3>
+            <p>Fidelización, ROAS de 4.2x en temporada alta, +2.300 registros calificados en 5 meses. Sigue activo hoy.</p>
+            <span class="chip">Sheraton</span>
+          </div>
+        </li>
+        <li class="t-item">
+          <span class="t-year">2024</span>
+          <div class="t-body">
+            <h3>Escalé a growth marketing B2B con automatización más sofisticada</h3>
+            <p>Inbound y calificación automática de leads; +45% leads cualificados mes a mes.</p>
+            <span class="chip">Dev Senior Code</span>
+          </div>
+        </li>
+        <li class="t-item">
+          <span class="t-year">2023</span>
+          <div class="t-body">
+            <h3>Empecé a operar como consultora freelance independiente</h3>
+            <p>HubSpot, Make y n8n para nurturing de leads; ciclo de ventas −32%.</p>
+            <span class="chip">UDT · Unidad de Transformación Digital</span>
+          </div>
+        </li>
+        <li class="t-item">
+          <span class="t-year">2022</span>
+          <div class="t-body">
+            <h3>Pasé al lado de la plataforma como Key Account Manager</h3>
+            <p>Gestión de cuentas estratégicas, embudos de ventas, 110% de cumplimiento de revenue en Q3.</p>
+            <span class="chip">Escala SaaS</span>
+          </div>
+        </li>
+        <li class="t-item">
+          <span class="t-year">2021</span>
+          <div class="t-body">
+            <h3>Salto a automatización conversacional con IA</h3>
+            <p>Chatbots integrados a CRM y soporte al cliente; NPS de clientes clave +22% en promedio.</p>
+            <span class="chip">Aivo</span>
+          </div>
+        </li>
+        <li class="t-item">
+          <span class="t-year">2020</span>
+          <div class="t-body">
+            <h3>Entré al marketing digital como estratega de contenido y campañas</h3>
+            <p>Diseño basado en investigación de audiencia; comunidades de más de 10.000 seguidores para 2 marcas.</p>
+            <span class="chip">PEGASI</span>
+          </div>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="band" id="contacto">
+    <div class="wrap">
+      <div class="heading-pair reveal">
+        <h2><span class="line">Hablemos de tu</span><span class="line"><em class="payoff">escala</em>.</span></h2>
+      </div>
+
+      <div class="contact-grid reveal">
+        <div class="contact-direct">
+          <div class="row"><span class="label k">Correo</span><div class="v"><a href="mailto:natalysuarez54@gmail.com">natalysuarez54@gmail.com</a></div></div>
+          <div class="row"><span class="label k">Teléfono</span><div class="v">+57 322 644 9200</div></div>
+          <div class="row"><span class="label k">LinkedIn</span><div class="v"><a href="https://linkedin.com/in/nataly-suarez-marketingdigital">linkedin.com/in/nataly-suarez-marketingdigital</a></div></div>
+          <div class="row"><span class="label k">Base</span><div class="v">Bogotá D.C., Colombia</div></div>
+        </div>
+
+        <form class="cform" onsubmit="return false;">
+          <div class="field">
+            <label class="label" for="nombre">Tu nombre</label>
+            <input id="nombre" type="text" placeholder="Nombre y apellido" />
+          </div>
+          <div class="field">
+            <label class="label" for="correo">Correo electrónico</label>
+            <input id="correo" type="email" placeholder="tú@empresa.com" />
+          </div>
+          <div class="field">
+            <label class="label" for="mensaje">Mensaje</label>
+            <textarea id="mensaje" placeholder="Cuéntame en qué estás trabajando"></textarea>
+          </div>
+          <button class="btn btn-primary" type="submit" disabled>Enviar</button>
+          <p class="cform-note">Vista previa — formulario aún no conectado</p>
+        </form>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p class="foot-headline">Tu próxima etapa,<br />en <em class="payoff">escala</em>.</p>
+    <div class="foot-links">
+      <a href="mailto:natalysuarez54@gmail.com">natalysuarez54@gmail.com</a>
+      <a href="https://linkedin.com/in/nataly-suarez-marketingdigital">LinkedIn</a>
+      <a href="tel:+573226449200">+57 322 644 9200</a>
+    </div>
+    <p class="foot-copy">Nataly Suárez Martínez © 2026</p>
+  </div>
+</footer>
+
+<script>
+  function toggleWork(btn) {
+    var card = btn.closest('.work-card');
+    var open = card.classList.toggle('is-open');
+    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    btn.querySelector('.txt').textContent = open ? 'Ver menos' : 'Ver más';
+  }
+
+  (function () {
+    var nav = document.getElementById('nav');
+    var onScroll = function () {
+      if (window.scrollY > 40) nav.classList.add('scrolled');
+      else nav.classList.remove('scrolled');
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+
+    var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var items = document.querySelectorAll('.reveal');
+    if (reduce || !('IntersectionObserver' in window)) {
+      items.forEach(function (el) { el.classList.add('in'); });
+      return;
+    }
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('in');
+          io.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+    items.forEach(function (el) { io.observe(el); });
+  })();
+</script>
