@@ -215,7 +215,7 @@
     content: '';
     position: absolute;
     inset: 0;
-    background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.35) 40%, rgba(0,0,0,0.05) 65%);
+    background: linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.72) 35%, rgba(0,0,0,0.5) 60%, rgba(0,0,0,0.3) 100%);
   }
   .hero-inner { position: relative; z-index: 2; }
   .hero-inner {
@@ -289,6 +289,8 @@
     font-weight: var(--font-weight-light);
   }
   .heading-pair h2 .line { display: block; }
+  .heading-pair.center { text-align: center; }
+  .heading-pair.center .band-sub { margin-left: auto; margin-right: auto; }
 
   /* ---- about ---- */
   .about-grid {
@@ -466,12 +468,12 @@
     background-image: var(--photo);
     background-size: cover;
     background-position: center;
-    filter: sepia(0.18) saturate(0.82) contrast(1.05) brightness(0.82);
+    filter: sepia(0.18) saturate(0.7) contrast(1.08) brightness(0.62);
   }
   .work-card::after {
     content: '';
     position: absolute; inset: 0;
-    background: linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.15) 55%, rgba(0,0,0,0.05) 100%);
+    background: linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.62) 45%, rgba(0,0,0,0.32) 75%, rgba(0,0,0,0.14) 100%);
   }
   .work-badge {
     position: absolute;
@@ -523,6 +525,10 @@
   .work-toggle:hover { background: rgba(255,255,255,0.08); }
   .work-toggle .plus { transition: transform 0.3s var(--ease-sequel); }
   .work-card.is-open .work-toggle .plus { transform: rotate(45deg); }
+  .work-card.is-open {
+    justify-content: flex-start;
+    padding-top: var(--spacing-80);
+  }
 
   .work-detail {
     position: relative;
@@ -654,7 +660,7 @@
 
   <section class="band" id="acerca">
     <div class="wrap">
-      <div class="heading-pair reveal">
+      <div class="heading-pair reveal center">
         <h2><span class="line">Seis años construyendo sistemas que llevan la operación a otro nivel.</span></h2>
       </div>
 
@@ -662,7 +668,6 @@
         <div class="about-copy">
           <div class="about-photo"></div>
           <p>Especialista en marketing digital, growth marketing y customer experience. Acompaño a empresas B2B y B2C en la implementación de CRM, automatización de marketing y gestión de campañas — con un perfil estratégico, orientado a resultados medibles.</p>
-          <p>Técnica en Investigación de Mercados (SENA, 2009) y en formación continua de IA aplicada al marketing digital desde 2024, integrada directamente a cada proyecto activo.</p>
 
           <div class="about-meta">
             <div class="row"><span class="label k">Base</span><span class="v">Bogotá D.C., Colombia — remoto</span></div>
@@ -778,8 +783,8 @@
 
   <section class="band" id="formas">
     <div class="wrap">
-      <div class="heading-pair reveal">
-        <h2><span class="line">Formas en que podemos trabajar juntas</span></h2>
+      <div class="heading-pair reveal center">
+        <h2><span class="line">Formas en que podemos trabajar juntos</span></h2>
         <p class="band-sub">Si algo de esto encaja con lo que necesitas, hablemos.</p>
       </div>
 
@@ -801,7 +806,7 @@
           <p>Google Ads, Meta Ads, GA4, GTM, Looker Studio — de la campaña al dashboard.</p>
         </div>
         <div class="card">
-          <h3>Auditoría de CRM hygiene + lead scoring</h3>
+          <h3>Auditoría de CRM + lead scoring</h3>
           <p>Diagnóstico de salud del funnel, campos críticos, nomenclatura y madurez de datos.</p>
         </div>
         <div class="card">
