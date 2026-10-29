@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Registro de Visitas</title>
+<style>
+  :root {
+    --navy: #1f3a5f;
+    --navy-dark: #162b47;
+    --naranja: #d97757;
+    --fondo: #f3f5f8;
+    --tarjeta: #ffffff;
+    --texto: #1c2430;
+    --suave: #5b6675;
+    --borde: #cfd6df;
+    --linea: #e4e8ee;
+    --error: #b42318;
+    --error-fondo: #fdecea;
+    --ok: #1d6b3a;
+    --ok-fondo: #e6f4ea;
+    --aviso: #8a5a00;
+    --aviso-fondo: #fff4dc;
+  }
+  * { box-sizing: border-box; }
+  html { font-size: 18px; -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0; background: var(--fondo); color: var(--texto);
+    font-family: "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
+    line-height: 1.45;
+  }
+  button, input, select, textarea { font: inherit; color: inherit; }
+  [hidden] { display: none !important; }
+
+  /* ---------- Cabecera ---------- */
+  .top { background: var(--navy); color: #fff; position: sticky; top: 0; z-index: 20; box-shadow: 0 2px 6px rgba(0,0,0,.15); }
+  .top-in { max-width: 1100px; margin: 0 auto; padding: 10px 16px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .marca { display: flex; align-items: center; gap: 12px; margin-right: auto; }
+  .marca svg { width: 44px; height: 44px; flex: none; }
+  .marca b { display: block; font-size: 1.15rem; line-height: 1.1; }
+  .marca span { font-size: .8rem; opacity: .85; }
+  .reloj { font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; line-height: 1.2; }
+  .reloj small { display: block; font-weight: 400; opacity: .85; font-size: .8rem; }
+  .tabs { display: flex; gap: 6px; flex-wrap: wrap; width: 100%; }
+  .tab { background: transparent; border: 2px solid rgba(255,255,255,.35); color: #fff; padding: 8px 16px; border-radius: 999px; cursor: pointer; font-weight: 600; min-height: 44px; }
+  .tab:hover { border-color: #fff; }
+  .tab[aria-selected="true"] { background: #fff; color: var(--navy); border-color: #fff; }
+
+  main { max-width: 1100px; margin: 0 auto; padding: 20px 16px 60px; }
+  h1 { font-size: 1.5rem; margin: 0 0 4px; color: var(--navy); }
+  h2 { font-size: 1.2rem; margin: 0 0 14px; color: var(--navy); }
+  .sub { color: var(--suave); margin: 0 0 18px; }
+  .card { background: var(--tarjeta); border: 1px solid var(--linea); border-radius: 12px; padding: 20px; margin-bottom: 18px; }
+
+  /* ---------- Botones ---------- */
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 10px 20px; border-radius: 10px; border: 2px solid var(--navy); background: #fff; color: var(--navy); font-weight: 700; cursor: pointer; text-align: center; }
+  .btn:hover { background: #eef2f7; }
+  .btn.primario { background: var(--navy); color: #fff; }
+  .btn.primario:hover { background: var(--navy-dark); }
+  .btn.peligro { border-color: var(--error); color: var(--error); }
+  .btn.peligro:hover { background: var(--error-fondo); }
+  .btn.peligro.lleno { background: var(--error); color: #fff; }
+  .btn.salida { border-color: var(--naranja); background: var(--naranja); color: #fff; }
+  .btn.salida:hover { filter: brightness(.94); }
+  .btn.chico { min-height: 40px; padding: 6px 12px; font-size: .9rem; border-width: 1.5px; }
+  .btn.gigante { width: 100%; min-height: 84px; font-size: 1.45rem; border-radius: 14px; }
+  .acciones { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+  button:focus-visible, input:focus, select:focus, textarea:focus { outline: 3px solid rgba(31,58,95,.35); outline-offset: 1px; }
+
+  /* ---------- Formularios ---------- */
+  .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px 18px; }
+  .grid .full { grid-column: 1 / -1; }
+  .campo label, .campo .etq { display: block; font-weight: 600; margin-bottom: 4px; font-size: .95rem; }
+  .opc { font-weight: 400; color: var(--suave); font-size: .85rem; }
+  input[type="text"], input[type="search"], select, textarea { width: 100%; padding: 10px 12px; border: 1.5px solid var(--borde); border-radius: 8px; background: #fff; min-height: 48px; }
+  select:disabled { background: #eef1f5; color: var(--suave); }
+  .invalido { border-color: var(--error) !important; background: var(--error-fondo) !important; }
+  .error { color: var(--error); font-size: .9rem; font-weight: 600; margin-top: 4px; }
+  .error:empty { display: none; }
+  .ayuda { color: var(--suave); font-size: .85rem; margin-top: 4px; }
+  .segmento { display: flex; gap: 8px; flex-wrap: wrap; }
+  .segmento label { flex: 1 1 140px; display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 8px 12px; border: 1.5px solid var(--borde); border-radius: 8px; cursor: pointer; font-weight: 600; text-align: center; margin: 0; background: #fff; }
+  .segmento input { position: absolute; opacity: 0; pointer-events: none; }
+  .segmento input:checked + span { color: #fff; }
+  .segmento label:has(input:checked) { background: var(--navy); border-color: var(--navy); color: #fff; }
+  .segmento label:has(input:focus-visible) { outline: 3px solid rgba(31,58,95,.35); }
+  .segmento.invalido-grupo label { border-color: var(--error); }
+  .anexo { margin-top: 6px; font-weight: 700; color: var(--navy); }
+  .hora-auto { background: #e9eef5; border-radius: 8px; padding: 12px 14px; font-weight: 600; }
+  .hora-auto b { font-size: 1.2rem; color: var(--navy); font-variant-numeric: tabular-nums; }
+  .conocido { background: var(--ok-fondo); color: var(--ok); border-radius: 8px; padding: 8px 12px; margin-top: 6px; font-size: .9rem; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+
+  /* ---------- Avisos ---------- */
+  .banner { border-radius: 12px; padding: 14px 18px; margin-bottom: 18px; font-weight: 600; }
+  .banner.rojo { background: var(--error-fondo); color: var(--error); border: 1.5px solid #f3b8b2; }
+  .banner.ambar { background: var(--aviso-fondo); color: var(--aviso); border: 1.5px solid #f0d49a; }
+  .banner ul { margin: 6px 0 0; padding-left: 20px; font-weight: 400; }
+
+  /* ---------- Lista "dentro ahora" ---------- */
+  .cab-lista { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin: 26px 0 12px; }
+  .contador { background: var(--navy); color: #fff; border-radius: 999px; padding: 2px 12px; font-size: 1rem; margin-left: 6px; font-variant-numeric: tabular-nums; }
+  .visitantes { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; }
+  .visitante { background: var(--tarjeta); border: 1px solid var(--linea); border-radius: 12px; padding: 16px 18px; display: flex; flex-direction: column; gap: 6px; }
+  .visitante.atrasado { border-color: #f3b8b2; background: #fffafa; }
+  .visitante .nom { font-size: 1.15rem; font-weight: 700; }
+  .visitante .doc { color: var(--suave); font-size: .9rem; }
+  .visitante .dest { font-size: .95rem; }
+  .visitante .tiempo { font-variant-numeric: tabular-nums; font-weight: 600; color: var(--navy); }
+  .visitante .atr { color: var(--error); font-weight: 700; font-size: .9rem; }
+  .visitante .btn { margin-top: 6px; }
+  .vacio { color: var(--suave); text-align: center; padding: 30px 10px; background: var(--tarjeta); border: 1px dashed var(--borde); border-radius: 12px; }
+
+  /* ---------- Tablas ---------- */
+  .tabla-caja { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: .92rem; }
+  th { text-align: left; color: var(--suave); font-size: .8rem; text-transform: uppercase; letter-spacing: .04em; padding: 8px 10px; border-bottom: 2px solid var(--linea); white-space: nowrap; }
+  td { padding: 10px; border-bottom: 1px solid var(--linea); vertical-align: top; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  td .sec { display: block; color: var(--suave); font-size: .85rem; }
+  .chip { display: inline-block; border-radius: 999px; padding: 2px 10px; font-size: .8rem; font-weight: 700; white-space: nowrap; }
+  .chip.dentro { background: var(--aviso-fondo); color: var(--aviso); }
+  .chip.fuera { background: var(--ok-fondo); color: var(--ok); }
+
+  .resumen { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
+  .resumen div { background: #f1f4f8; border-radius: 10px; padding: 12px 14px; }
+  .resumen b { display: block; font-size: 1.5rem; color: var(--navy); font-variant-numeric: tabular-nums; }
+  .resumen span { color: var(--suave); font-size: .85rem; }
+  .periodo { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 16px; }
+  .periodo .etq-per { font-size: 1.15rem; font-weight: 700; min-width: 180px; text-align: center; color: var(--navy); }
+  .periodo input { width: 170px; text-align: center; }
+
+  /* ---------- Modal y toast ---------- */
+  .velo { position: fixed; inset: 0; background: rgba(15,25,40,.55); z-index: 50; display: flex; align-items: flex-start; justify-content: center; padding: 16px; overflow-y: auto; }
+  .modal { background: #fff; border-radius: 14px; padding: 24px; max-width: 480px; width: 100%; margin: auto 0; box-shadow: 0 20px 50px rgba(0,0,0,.3); }
+  .modal.ancho { max-width: 760px; }
+  .modal h3 { margin: 0 0 8px; font-size: 1.3rem; color: var(--navy); }
+  .modal p { margin: 0 0 16px; }
+  .modal ul { margin: 0 0 16px; padding-left: 20px; }
+  .modal .acciones { justify-content: flex-end; margin-top: 8px; }
+  .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 60; background: var(--texto); color: #fff; padding: 12px 20px; border-radius: 10px; max-width: calc(100% - 32px); box-shadow: 0 8px 24px rgba(0,0,0,.25); font-weight: 600; }
+
+  @media (max-width: 760px) {
+    html { font-size: 17px; }
+    .top { position: static; }
+    .grid { grid-template-columns: 1fr; }
+    .tab { flex: 1; padding: 8px 6px; font-size: .88rem; }
+    .card { padding: 16px; }
+    .visitantes { grid-template-columns: 1fr; }
+    .resumen { grid-template-columns: 1fr 1fr; }
+    .modal { padding: 18px; }
+    .modal .acciones .btn { flex: 1 1 auto; }
+    .periodo .etq-per { min-width: 0; flex: 1; }
+    .periodo input { flex: 1; width: auto; }
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-in">
+    <div class="marca">
+      <svg viewBox="0 0 120 120" aria-hidden="true"><rect width="120" height="120" rx="18" fill="#1f3a5f" stroke="rgba(255,255,255,.35)" stroke-width="3"/><polygon points="60,30 25,100 95,100" fill="#d97757"/><polygon points="75,55 50,100 100,100" fill="#fff"/></svg>
+      <div><b>Registro de Visitas</b><span>Comercial Los Andes S.A.C. · Recepción</span></div>
+    </div>
+    <div class="reloj" aria-live="off"><span id="reloj-hora">--:--</span><small id="reloj-fecha"></small></div>
+    <nav class="tabs" role="tablist">
+      <button class="tab" role="tab" data-vista="inicio" aria-selected="true">Inicio</button>
+      <button class="tab" role="tab" data-vista="buscar" aria-selected="false">Buscar</button>
+      <button class="tab" role="tab" data-vista="reportes" aria-selected="false">Reportes</button>
+      <button class="tab" role="tab" data-vista="ajustes" aria-selected="false">Ajustes y copia</button>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div id="banner-almacen" class="banner rojo" hidden>Este navegador no permite guardar datos (modo privado o bloqueado). Lo que registres se perderá al cerrar. Usa “Descargar copia de seguridad”.</div>
+
+  <!-- ================= INICIO ================= -->
+  <section id="vista-inicio">
+    <div id="banner-cierre"></div>
+    <button class="btn primario gigante" id="btn-ingreso">+ Registrar ingreso</button>
+    <div class="cab-lista">
+      <h1>Visitantes dentro ahora <span class="contador" id="contador">0</span></h1>
+    </div>
+    <div id="lista-dentro"></div>
+  </section>
+
+  <!-- ================= BUSCAR ================= -->
+  <section id="vista-buscar" hidden>
+    <h1>Buscar visitas</h1>
+    <p class="sub">Escribe el nombre o el número de documento. Busca en todas las visitas guardadas.</p>
+    <div class="card">
+      <div class="campo">
+        <label for="buscar">Nombre o número de documento</label>
+        <input type="search" id="buscar" placeholder="Ej. Pérez o 45678912" autocomplete="off">
+      </div>
+      <div id="resultados" style="margin-top:14px"></div>
+    </div>
+  </section>
+
+  <!-- ================= REPORTES ================= -->
+  <section id="vista-reportes" hidden>
+    <h1>Reportes</h1>
+    <p class="sub">Hora de ingreso, hora de salida y tiempo de permanencia de cada visita.</p>
+    <div class="card">
+      <div class="segmento" role="radiogroup" aria-label="Tipo de reporte" style="margin-bottom:16px">
+        <label><input type="radio" name="tipo-rep" value="dia" checked><span>Del día</span></label>
+        <label><input type="radio" name="tipo-rep" value="mes"><span>Del mes</span></label>
+      </div>
+      <div class="periodo" id="periodo-dia">
+        <button class="btn chico" id="dia-ant" aria-label="Día anterior">◀ Anterior</button>
+        <input type="text" id="rep-fecha" inputmode="numeric" maxlength="10" placeholder="dd/mm/aaaa" aria-label="Fecha del reporte">
+        <button class="btn chico" id="dia-sig" aria-label="Día siguiente">Siguiente ▶</button>
+        <button class="btn chico" id="dia-hoy">Hoy</button>
+      </div>
+      <div class="error" id="err-rep-fecha" style="margin:-8px 0 12px"></div>
+      <div class="periodo" id="periodo-mes" hidden>
+        <button class="btn chico" id="mes-ant" aria-label="Mes anterior">◀ Anterior</button>
+        <span class="etq-per" id="mes-etq"></span>
+        <button class="btn chico" id="mes-sig" aria-label="Mes siguiente">Siguiente ▶</button>
+        <button class="btn chico" id="mes-hoy">Este mes</button>
+      </div>
+      <div class="resumen" id="rep-resumen"></div>
+      <div class="acciones" style="margin-bottom:12px">
+        <button class="btn primario" id="btn-excel">Exportar a Excel</button>
+        <span class="error" id="err-excel"></span>
+      </div>
+      <div class="tabla-caja" id="rep-tabla"></div>
+    </div>
+  </section>
+
+  <!-- ================= AJUSTES ================= -->
+  <section id="vista-ajustes" hidden>
+    <h1>Ajustes y copia de seguridad</h1>
+    <div class="card">
+      <h2>Aviso de fin del día</h2>
+      <div class="campo" style="max-width:320px">
+        <label for="hora-cierre">Hora de cierre de recepción</label>
+        <select id="hora-cierre"></select>
+        <div class="ayuda">Desde esa hora, la app avisa quién sigue sin marcar salida.</div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Descargar copia de seguridad</h2>
+      <p id="resumen-datos" style="margin-top:0"></p>
+      <p class="ayuda" style="margin-top:-8px">Los datos se guardan solos en esta tablet. Descarga una copia cada semana por si se borra el navegador o cambias de equipo.</p>
+      <button class="btn primario" id="btn-descargar">Descargar copia de seguridad</button>
+    </div>
+    <div class="card">
+      <h2>Cargar copia de seguridad</h2>
+      <p style="margin-top:0">Reemplaza los datos de este navegador por los de un archivo de copia (.json).</p>
+      <button class="btn" id="btn-cargar">Cargar copia de seguridad</button>
+      <input type="file" id="archivo" accept=".json,application/json" hidden>
+      <div class="error" id="err-archivo"></div>
+    </div>
+  </section>
+</main>
+
+<!-- ================= FORMULARIO DE INGRESO ================= -->
+<div class="velo" id="form-velo" hidden>
+  <form class="modal ancho" id="form-ingreso" novalidate aria-labelledby="form-titulo">
+    <h3 id="form-titulo">Registrar ingreso</h3>
+    <div class="grid" style="margin-top:14px">
+      <div class="campo full">
+        <label for="f-nombre">Nombre completo</label>
+        <input type="text" id="f-nombre" autocomplete="off" autocapitalize="words">
+        <div class="error" id="err-f-nombre"></div>
+      </div>
+      <div class="campo full">
+        <span class="etq" id="etq-tipo">Tipo de documento</span>
+        <div class="segmento" role="radiogroup" aria-labelledby="etq-tipo" id="f-tipo">
+          <label><input type="radio" name="tipo" value="DNI" checked><span>DNI</span></label>
+          <label><input type="radio" name="tipo" value="CE"><span>Carné de extranjería</span></label>
+          <label><input type="radio" name="tipo" value="PAS"><span>Pasaporte</span></label>
+        </div>
+      </div>
+      <div class="campo">
+        <label for="f-doc">Número de documento</label>
+        <input type="text" id="f-doc" inputmode="numeric" maxlength="8" autocomplete="off" autocapitalize="characters">
+        <div class="ayuda" id="ayuda-doc">8 dígitos</div>
+        <div class="error" id="err-f-doc"></div>
+        <div id="conocido"></div>
+      </div>
+      <div class="campo">
+        <label for="f-empresa">Empresa <span class="opc">(opcional)</span></label>
+        <input type="text" id="f-empresa" autocomplete="off" placeholder="Si viene por su cuenta, déjalo vacío">
+        <div class="error" id="err-f-empresa"></div>
+      </div>
+      <div class="campo">
+        <label for="f-area">Área a visitar</label>
+        <select id="f-area"></select>
+        <div class="error" id="err-f-area"></div>
+      </div>
+      <div class="campo">
+        <label for="f-anfitrion">Anfitrión</label>
+        <select id="f-anfitrion" disabled><option value="">Primero elige el área</option></select>
+        <div class="anexo" id="f-anexo"></div>
+        <div class="error" id="err-f-anfitrion"></div>
+      </div>
+      <div class="campo full">
+        <label for="f-motivo">Motivo de la visita <span class="opc">(opcional)</span></label>
+        <input type="text" id="f-motivo" list="motivos" autocomplete="off">
+        <datalist id="motivos">
+          <option value="Reunión"><option value="Entrega de documentos"><option value="Entrevista de trabajo">
+          <option value="Proveedor / entrega de mercadería"><option value="Mantenimiento técnico"><option value="Cobranza"><option value="Visita comercial">
+        </datalist>
+      </div>
+      <div class="campo full">
+        <span class="etq">Hora de ingreso</span>
+        <div class="hora-auto">Se registrará automáticamente: <b id="f-hora"></b></div>
+      </div>
+    </div>
+    <div class="acciones">
+      <button type="button" class="btn" id="f-cancelar">Cancelar</button>
+      <button type="submit" class="btn primario">Registrar ingreso</button>
+    </div>
+  </form>
+</div>
+
+<script>
+"use strict";
+
+/* =====================================================================
+   Áreas y anfitriones (de Areas_y_Anfitriones.xlsx)
+   ===================================================================== */
+const ANFITRIONES = [
+  ["Gerencia","Carmen Ríos Valdivia","101"],
+  ["Gerencia","Rosa Medina Loayza","102"],
+  ["Finanzas","Luis Paredes Vega","201"],
+  ["Finanzas","Sofía Castro Ruiz","202"],
+  ["Finanzas","Andrés Lozano Pinto","203"],
+  ["RR. HH.","Ana Torres Benítez","301"],
+  ["RR. HH.","Karina Ugarte Solís","302"],
+  ["Logística","Jorge Salas Medina","401"],
+  ["Logística","Pedro Huanca Mamani","402"],
+  ["Ventas","Carla Núñez Herrera","501"],
+  ["Ventas","Martín Quispe Arana","502"],
+  ["Ventas","Luis Gamarra Ríos","503"],
+  ["Sistemas","Diego Huamán Torres","601"],
+  ["Sistemas","Valeria Prado Núñez","602"],
+  ["Sistemas","Hugo Ramírez Caldas","603"]
+].map(([area, nombre, anexo]) => ({ area, nombre, anexo }));
+const AREAS = [...new Set(ANFITRIONES.map(a => a.area))];
+const TIPOS = { DNI: "DNI", CE: "Carné de extranjería", PAS: "Pasaporte" };
+const TIPOS_CORTO = { DNI: "DNI", CE: "C.E.", PAS: "Pasaporte" };
+const MESES = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+const CLAVE = "registro_visitas_losandes_v1";
+
+/* =====================================================================
+   Utilidades
+   ===================================================================== */
+const $ = s => document.querySelector(s);
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const pad = n => String(n).padStart(2, "0");
+const norm = s => String(s).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+const fFecha = d => pad(d.getDate()) + "/" + pad(d.getMonth() + 1) + "/" + d.getFullYear();
+const fHora = d => pad(d.getHours()) + ":" + pad(d.getMinutes());
+const claveDia = d => d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+const mismoDia = (a, b) => claveDia(a) === claveDia(b);
+function leerFecha(s) {
+  const m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(String(s).trim());
+  if (!m) return null;
+  const d = new Date(+m[3], +m[2] - 1, +m[1]);
+  return d.getDate() === +m[1] && d.getMonth() === +m[2] - 1 ? d : null;
+}
+function duracion(min) {
+  min = Math.max(0, Math.floor(min));
+  if (min < 60) return min + " min";
+  const h = Math.floor(min / 60), m = min % 60;
+  if (h < 24) return h + " h " + pad(m) + " min";
+  const d = Math.floor(h / 24);
+  return d + " d " + (h % 24) + " h " + pad(m) + " min";
+}
+const minutosEntre = (a, b) => (new Date(b) - new Date(a)) / 60000;
+const docVisible = v => TIPOS_CORTO[v.tipoDoc] + " " + v.numDoc;
+function salidaTexto(v) {
+  if (!v.salida) return "";
+  const s = new Date(v.salida);
+  return mismoDia(s, new Date(v.ingreso)) ? fHora(s) : fFecha(s) + " " + fHora(s);
+}
+
+/* =====================================================================
+   Almacenamiento
+   ===================================================================== */
+let DB = { visitas: [], horaCierre: "18:00", avisoMostrado: "" };
+let almacenOK = true;
+function cargarDB() {
+  try {
+    const raw = localStorage.getItem(CLAVE);
+    if (raw) DB = Object.assign(DB, JSON.parse(raw));
+    localStorage.setItem(CLAVE + "_p", "1");
+    localStorage.removeItem(CLAVE + "_p");
+  } catch (e) { almacenOK = false; }
+}
+function guardarDB() {
+  try { localStorage.setItem(CLAVE, JSON.stringify(DB)); }
+  catch (e) { almacenOK = false; $("#banner-almacen").hidden = false; }
+}
+const dentro = () => DB.visitas.filter(v => !v.salida).sort((a, b) => a.ingreso.localeCompare(b.ingreso));
+
+/* =====================================================================
+   Toast y confirmación
+   ===================================================================== */
+let toastTimer;
+function aviso(msg) {
+  let t = $(".toast");
+  if (!t) { t = document.createElement("div"); t.className = "toast"; t.setAttribute("role", "status"); document.body.appendChild(t); }
+  t.textContent = msg; t.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.hidden = true; }, 3200);
+}
+function confirmar({ titulo, mensaje, lista, si = "Sí, borrar", no = "Cancelar", peligro = true, soloOk = false }) {
+  return new Promise(resolve => {
+    const velo = document.createElement("div");
+    velo.className = "velo";
+    velo.innerHTML = `<div class="modal" role="alertdialog" aria-modal="true" aria-labelledby="m-t">
+      <h3 id="m-t">${esc(titulo)}</h3>${mensaje ? `<p>${esc(mensaje)}</p>` : ""}
+      ${lista ? `<ul>${lista.map(x => `<li>${esc(x)}</li>`).join("")}</ul>` : ""}
+      <div class="acciones">${soloOk ? "" : `<button class="btn" data-r="0">${esc(no)}</button>`}
+      <button class="btn ${peligro ? "peligro lleno" : "primario"}" data-r="1">${esc(si)}</button></div></div>`;
+    const previo = document.activeElement;
+    const cerrar = r => { velo.remove(); document.removeEventListener("keydown", tecla); if (previo && previo.focus) previo.focus(); resolve(r); };
+    const tecla = e => { if (e.key === "Escape") cerrar(false); };
+    velo.addEventListener("click", e => {
+      if (e.target === velo) return cerrar(false);
+      const b = e.target.closest("[data-r]");
+      if (b) cerrar(b.dataset.r === "1");
+    });
+    document.addEventListener("keydown", tecla);
+    document.body.appendChild(velo);
+    velo.querySelector(soloOk ? '[data-r="1"]' : '[data-r="0"]').focus();
+  });
+}
+
+/* =====================================================================
+   Reloj
+   ===================================================================== */
+function tic() {
+  const ahora = new Date();
+  $("#reloj-hora").textContent = fHora(ahora);
+  $("#reloj-fecha").textContent = fFecha(ahora);
+  $("#f-hora").textContent = fFecha(ahora) + " · " + fHora(ahora);
+}
+
+/* =====================================================================
+   Inicio: visitantes dentro
+   ===================================================================== */
+function pintarDentro() {
+  const lista = dentro();
+  $("#contador").textContent = lista.length;
+  const hoy = new Date();
+  $("#lista-dentro").innerHTML = !lista.length
+    ? '<div class="vacio">No hay visitantes dentro del edificio.</div>'
+    : '<div class="visitantes">' + lista.map(v => {
+        const ing = new Date(v.ingreso);
+        const atrasado = !mismoDia(ing, hoy);
+        return `<article class="visitante${atrasado ? " atrasado" : ""}">
+          <div class="nom">${esc(v.nombre)}</div>
+          <div class="doc">${esc(docVisible(v))}${v.empresa ? " · " + esc(v.empresa) : ""}</div>
+          <div class="dest">Visita a <b>${esc(v.anfitrion)}</b> · ${esc(v.area)} · anexo ${esc(v.anexo)}</div>
+          ${v.motivo ? `<div class="doc">Motivo: ${esc(v.motivo)}</div>` : ""}
+          ${atrasado ? `<div class="atr">Ingresó el ${fFecha(ing)} y no marcó salida</div>` : ""}
+          <div class="tiempo">Ingresó ${fHora(ing)} · lleva ${duracion(minutosEntre(v.ingreso, hoy))}</div>
+          <button class="btn salida" data-salida="${v.id}">Marcar salida</button>
+        </article>`;
+      }).join("") + "</div>";
+  revisarCierre(false);
+}
+
+async function marcarSalida(id) {
+  const v = DB.visitas.find(x => x.id === id);
+  if (!v || v.salida) return;
+  const ahora = new Date();
+  const ok = await confirmar({
+    titulo: "¿Marcar salida?",
+    mensaje: `${v.nombre} (${docVisible(v)}). Hora de salida: ${fHora(ahora)}. Permanencia: ${duracion(minutosEntre(v.ingreso, ahora))}.`,
+    si: "Sí, marcar salida", peligro: false
+  });
+  if (!ok) return;
+  v.salida = new Date().toISOString();
+  guardarDB();
+  refrescar();
+  aviso(`Salida registrada: ${v.nombre} a las ${fHora(new Date(v.salida))}.`);
+}
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-salida]");
+  if (b) marcarSalida(b.dataset.salida);
+});
+
+/* ---------- Aviso de fin del día ---------- */
+function pasoCierre(ahora) {
+  const [h, m] = DB.horaCierre.split(":").map(Number);
+  return ahora.getHours() * 60 + ahora.getMinutes() >= h * 60 + m;
+}
+function revisarCierre(mostrarModal) {
+  const ahora = new Date();
+  const lista = dentro();
+  const anteriores = lista.filter(v => !mismoDia(new Date(v.ingreso), ahora));
+  const deHoy = lista.filter(v => mismoDia(new Date(v.ingreso), ahora));
+  let h = "";
+  if (pasoCierre(ahora) && deHoy.length) {
+    h += `<div class="banner rojo" role="alert">Fin del día (cierre ${DB.horaCierre}): ${deHoy.length} persona${deHoy.length === 1 ? " sigue" : "s siguen"} sin marcar salida.
+      <ul>${deHoy.map(v => `<li>${esc(v.nombre)} — visita a ${esc(v.anfitrion)} (anexo ${esc(v.anexo)}), desde las ${fHora(new Date(v.ingreso))}</li>`).join("")}</ul></div>`;
+  }
+  if (anteriores.length) {
+    h += `<div class="banner ambar">${anteriores.length} visita${anteriores.length === 1 ? "" : "s"} de días anteriores sin salida marcada. Confirma con el anfitrión si ya se fue${anteriores.length === 1 ? "" : "ron"} y marca la salida.</div>`;
+  }
+  $("#banner-cierre").innerHTML = h;
+  if (mostrarModal && pasoCierre(ahora) && deHoy.length && DB.avisoMostrado !== claveDia(ahora) && !document.querySelector(".velo:not([hidden])")) {
+    DB.avisoMostrado = claveDia(ahora);
+    guardarDB();
+    confirmar({
+      titulo: "Fin del día: personas sin salida",
+      mensaje: `Son las ${fHora(ahora)}. Estas personas siguen registradas dentro del edificio:`,
+      lista: deHoy.map(v => `${v.nombre} — visita a ${v.anfitrion} (anexo ${v.anexo})`),
+      si: "Entendido", peligro: false, soloOk: true
+    }).then(() => mostrarVista("inicio"));
+  }
+}
+
+/* =====================================================================
+   Formulario de ingreso
+   ===================================================================== */
+const F = { nombre: $("#f-nombre"), doc: $("#f-doc"), empresa: $("#f-empresa"), area: $("#f-area"), anfitrion: $("#f-anfitrion"), motivo: $("#f-motivo") };
+F.area.innerHTML = '<option value="">Elige el área</option>' + AREAS.map(a => `<option>${esc(a)}</option>`).join("");
+const tipoActual = () => document.querySelector('input[name="tipo"]:checked').value;
+
+function ponerError(input, msg) {
+  input.classList.toggle("invalido", !!msg);
+  input.setAttribute("aria-invalid", msg ? "true" : "false");
+  const err = $("#err-" + input.id);
+  if (err) err.textContent = msg || "";
+}
+const limpiarDoc = (v, tipo) => tipo === "DNI" ? v.replace(/\D/g, "").slice(0, 8) : v.replace(/[^a-zA-Z0-9]/g, "").toUpperCase().slice(0, 12);
+function errDoc(v, tipo) {
+  if (!v) return "Escribe el número de documento.";
+  if (tipo === "DNI") return /^\d{8}$/.test(v) ? "" : `El DNI debe tener 8 dígitos (ahora tiene ${v.length}).`;
+  if (!/^[A-Z0-9]+$/.test(v)) return "Solo letras y números, sin espacios ni guiones.";
+  if (v.length < 9 || v.length > 12) return `El ${TIPOS[tipo].toLowerCase()} debe tener de 9 a 12 caracteres (ahora tiene ${v.length}).`;
+  return "";
+}
+function visitaAbierta(tipo, num) {
+  return DB.visitas.find(v => !v.salida && v.tipoDoc === tipo && v.numDoc === num);
+}
+const REGLAS = {
+  "f-nombre": () => {
+    const v = F.nombre.value.trim();
+    if (!v) return "Escribe el nombre completo del visitante.";
+    if (v.length < 3) return "El nombre es muy corto.";
+    if (/\d/.test(v)) return "El nombre no puede tener números.";
+    return "";
+  },
+  "f-doc": () => {
+    const e = errDoc(F.doc.value, tipoActual());
+    if (e) return e;
+    const ab = visitaAbierta(tipoActual(), F.doc.value);
+    if (ab) return `${ab.nombre} ya está dentro (ingresó a las ${fHora(new Date(ab.ingreso))}${mismoDia(new Date(ab.ingreso), new Date()) ? "" : " del " + fFecha(new Date(ab.ingreso))}, visita a ${ab.anfitrion}). Marca su salida antes de registrar un nuevo ingreso.`;
+    return "";
+  },
+  "f-area": () => F.area.value ? "" : "Elige el área que va a visitar.",
+  "f-anfitrion": () => !F.area.value ? "Primero elige el área y luego el anfitrión." : F.anfitrion.value ? "" : "Elige a la persona que lo va a recibir."
+};
+const validar = id => { const msg = REGLAS[id](); ponerError($("#" + id), msg); return !msg; };
+
+function ajustarTipo() {
+  const t = tipoActual();
+  F.doc.value = limpiarDoc(F.doc.value, t);
+  F.doc.maxLength = t === "DNI" ? 8 : 12;
+  F.doc.inputMode = t === "DNI" ? "numeric" : "text";
+  $("#ayuda-doc").textContent = t === "DNI" ? "8 dígitos" : "De 9 a 12 letras o números";
+  if (F.doc.value) validar("f-doc");
+  sugerirConocido();
+}
+document.querySelectorAll('input[name="tipo"]').forEach(r => r.addEventListener("change", ajustarTipo));
+
+F.doc.addEventListener("input", () => {
+  F.doc.value = limpiarDoc(F.doc.value, tipoActual());
+  if (F.doc.classList.contains("invalido") || visitaAbierta(tipoActual(), F.doc.value)) validar("f-doc");
+  sugerirConocido();
+});
+F.doc.addEventListener("blur", () => { if (F.doc.value) validar("f-doc"); });
+F.nombre.addEventListener("input", () => { if (F.nombre.classList.contains("invalido")) validar("f-nombre"); });
+F.nombre.addEventListener("blur", () => { if (F.nombre.value) validar("f-nombre"); });
+
+// Visitante que ya vino antes: ofrecer completar sus datos
+function sugerirConocido() {
+  const caja = $("#conocido");
+  const t = tipoActual(), n = F.doc.value;
+  caja.innerHTML = "";
+  if (errDoc(n, t) || visitaAbierta(t, n)) return;
+  const prev = DB.visitas.filter(v => v.tipoDoc === t && v.numDoc === n).sort((a, b) => b.ingreso.localeCompare(a.ingreso))[0];
+  if (!prev) return;
+  if (norm(F.nombre.value) === norm(prev.nombre) && (F.empresa.value || !prev.empresa)) return;
+  caja.innerHTML = `<div class="conocido">Ya vino antes: <b>${esc(prev.nombre)}</b>${prev.empresa ? " (" + esc(prev.empresa) + ")" : ""}
+    <button type="button" class="btn chico" id="usar-conocido">Usar sus datos</button></div>`;
+  $("#usar-conocido").onclick = () => {
+    F.nombre.value = prev.nombre;
+    F.empresa.value = prev.empresa || "";
+    validar("f-nombre");
+    caja.innerHTML = "";
+    F.area.focus();
+  };
+}
+
+function llenarAnfitriones() {
+  const a = F.area.value;
+  const lista = ANFITRIONES.filter(x => x.area === a);
+  F.anfitrion.disabled = !a;
+  F.anfitrion.innerHTML = a
+    ? '<option value="">Elige al anfitrión</option>' + lista.map(x => `<option value="${esc(x.nombre)}">${esc(x.nombre)} — anexo ${esc(x.anexo)}</option>`).join("")
+    : '<option value="">Primero elige el área</option>';
+  mostrarAnexo();
+}
+function mostrarAnexo() {
+  const x = ANFITRIONES.find(y => y.area === F.area.value && y.nombre === F.anfitrion.value);
+  $("#f-anexo").textContent = x ? "Anexo: " + x.anexo : "";
+}
+F.area.addEventListener("change", () => { llenarAnfitriones(); validar("f-area"); ponerError(F.anfitrion, ""); });
+F.anfitrion.addEventListener("change", () => { mostrarAnexo(); validar("f-anfitrion"); });
+
+function abrirFormulario() {
+  $("#form-ingreso").reset();
+  document.querySelector('input[name="tipo"][value="DNI"]').checked = true;
+  Object.values(F).forEach(el => ponerError(el, ""));
+  llenarAnfitriones();
+  ajustarTipo();
+  tic();
+  $("#form-velo").hidden = false;
+  document.body.style.overflow = "hidden";
+  setTimeout(() => F.nombre.focus(), 50);
+}
+function cerrarFormulario() {
+  $("#form-velo").hidden = true;
+  document.body.style.overflow = "";
+  $("#btn-ingreso").focus();
+}
+$("#btn-ingreso").addEventListener("click", abrirFormulario);
+$("#f-cancelar").addEventListener("click", cerrarFormulario);
+$("#form-velo").addEventListener("keydown", e => { if (e.key === "Escape") cerrarFormulario(); });
+
+$("#form-ingreso").addEventListener("submit", e => {
+  e.preventDefault();
+  const ids = ["f-nombre", "f-doc", "f-area", "f-anfitrion"];
+  const malos = ids.filter(id => !validar(id));
+  if (malos.length) {
+    $("#" + malos[0]).focus();
+    return;
+  }
+  const anf = ANFITRIONES.find(y => y.area === F.area.value && y.nombre === F.anfitrion.value);
+  const v = {
+    id: uid(),
+    nombre: F.nombre.value.trim().replace(/\s+/g, " "),
+    tipoDoc: tipoActual(),
+    numDoc: F.doc.value,
+    empresa: F.empresa.value.trim(),
+    area: anf.area, anfitrion: anf.nombre, anexo: anf.anexo,
+    motivo: F.motivo.value.trim(),
+    ingreso: new Date().toISOString(),
+    salida: null
+  };
+  DB.visitas.push(v);
+  guardarDB();
+  cerrarFormulario();
+  refrescar();
+  aviso(`Ingreso registrado: ${v.nombre} a las ${fHora(new Date(v.ingreso))}. Avisa al anexo ${v.anexo}.`);
+});
+
+/* =====================================================================
+   Buscar
+   ===================================================================== */
+function filaVisita(v, acciones) {
+  const ing = new Date(v.ingreso);
+  const perm = v.salida ? duracion(minutosEntre(v.ingreso, v.salida)) : "En curso";
+  return `<tr>
+    <td>${fFecha(ing)}</td>
+    <td><b>${esc(v.nombre)}</b><span class="sec">${esc(docVisible(v))}${v.empresa ? " · " + esc(v.empresa) : ""}</span></td>
+    <td>${esc(v.anfitrion)}<span class="sec">${esc(v.area)} · anexo ${esc(v.anexo)}${v.motivo ? " · " + esc(v.motivo) : ""}</span></td>
+    <td class="num">${fHora(ing)}</td>
+    <td class="num">${v.salida ? esc(salidaTexto(v)) : '<span class="chip dentro">Dentro</span>'}</td>
+    <td class="num">${perm}</td>
+    ${acciones ? `<td><div class="acciones" style="gap:6px;flex-wrap:nowrap">${!v.salida ? `<button class="btn chico" data-salida="${v.id}">Marcar salida</button>` : ""}<button class="btn chico peligro" data-borrar="${v.id}">Eliminar</button></div></td>` : ""}
+  </tr>`;
+}
+const CAB_TABLA = acciones => `<thead><tr><th>Fecha</th><th>Visitante</th><th>Anfitrión</th><th class="num">Ingreso</th><th class="num">Salida</th><th class="num">Permanencia</th>${acciones ? "<th></th>" : ""}</tr></thead>`;
+
+function pintarBusqueda() {
+  const q = norm($("#buscar").value);
+  const cont = $("#resultados");
+  if (!q) {
+    cont.innerHTML = `<p class="ayuda">Hay ${DB.visitas.length} visita${DB.visitas.length === 1 ? "" : "s"} guardada${DB.visitas.length === 1 ? "" : "s"}. Escribe para buscar.</p>`;
+    return;
+  }
+  const qDoc = q.replace(/[^a-z0-9]/g, "");
+  const terms = q.split(/\s+/);
+  const res = DB.visitas.filter(v => {
+    const nom = norm(v.nombre);
+    return terms.every(t => nom.includes(t)) || (qDoc && norm(v.numDoc).includes(qDoc));
+  }).sort((a, b) => b.ingreso.localeCompare(a.ingreso));
+  if (!res.length) {
+    cont.innerHTML = `<p class="vacio">No hay visitas con “${esc($("#buscar").value)}”.</p>`;
+    return;
+  }
+  const mostrar = res.slice(0, 200);
+  cont.innerHTML = `<p class="ayuda">${res.length} visita${res.length === 1 ? "" : "s"} encontrada${res.length === 1 ? "" : "s"}${res.length > 200 ? " (se muestran las 200 más recientes)" : ""}.</p>
+    <div class="tabla-caja"><table>${CAB_TABLA(true)}<tbody>${mostrar.map(v => filaVisita(v, true)).join("")}</tbody></table></div>`;
+}
+$("#buscar").addEventListener("input", pintarBusqueda);
+$("#resultados").addEventListener("click", async e => {
+  const b = e.target.closest("[data-borrar]");
+  if (!b) return;
+  const v = DB.visitas.find(x => x.id === b.dataset.borrar);
+  const ok = await confirmar({
+    titulo: "¿Eliminar esta visita?",
+    mensaje: `Se borrará el registro de ${v.nombre} (${docVisible(v)}) del ${fFecha(new Date(v.ingreso))} a las ${fHora(new Date(v.ingreso))}. Esta acción no se puede deshacer.`,
+    si: "Sí, eliminar"
+  });
+  if (!ok) return;
+  DB.visitas = DB.visitas.filter(x => x !== v);
+  guardarDB();
+  refrescar();
+  aviso("Visita eliminada.");
+});
+
+/* =====================================================================
+   Reportes
+   ===================================================================== */
+let repTipo = "dia", repDia = new Date(), repMes = new Date();
+repDia.setHours(0, 0, 0, 0);
+repMes = new Date(repMes.getFullYear(), repMes.getMonth(), 1);
+
+function visitasDelPeriodo() {
+  return DB.visitas.filter(v => {
+    const d = new Date(v.ingreso);
+    return repTipo === "dia" ? mismoDia(d, repDia) : d.getFullYear() === repMes.getFullYear() && d.getMonth() === repMes.getMonth();
+  }).sort((a, b) => a.ingreso.localeCompare(b.ingreso));
+}
+const nombrePeriodo = () => repTipo === "dia" ? fFecha(repDia) : MESES[repMes.getMonth()] + " de " + repMes.getFullYear();
+
+function pintarReporte() {
+  $("#periodo-dia").hidden = repTipo !== "dia";
+  $("#err-rep-fecha").hidden = repTipo !== "dia";
+  $("#periodo-mes").hidden = repTipo !== "mes";
+  if (document.activeElement !== $("#rep-fecha")) $("#rep-fecha").value = fFecha(repDia);
+  const etq = MESES[repMes.getMonth()] + " " + repMes.getFullYear();
+  $("#mes-etq").textContent = etq.charAt(0).toUpperCase() + etq.slice(1);
+  const lista = visitasDelPeriodo();
+  const cerradas = lista.filter(v => v.salida);
+  const prom = cerradas.length ? cerradas.reduce((a, v) => a + minutosEntre(v.ingreso, v.salida), 0) / cerradas.length : 0;
+  $("#rep-resumen").innerHTML = `
+    <div><b>${lista.length}</b><span>Visitas</span></div>
+    <div><b>${lista.length - cerradas.length}</b><span>Sin salida marcada</span></div>
+    <div><b>${cerradas.length ? duracion(prom) : "—"}</b><span>Permanencia promedio</span></div>`;
+  $("#rep-tabla").innerHTML = lista.length
+    ? `<table>${CAB_TABLA(false)}<tbody>${lista.map(v => filaVisita(v, false)).join("")}</tbody></table>`
+    : `<p class="vacio">No hay visitas registradas ${repTipo === "dia" ? "el " : "en "}${nombrePeriodo()}.</p>`;
+  $("#err-excel").textContent = "";
+}
+document.querySelectorAll('input[name="tipo-rep"]').forEach(r => r.addEventListener("change", () => { repTipo = r.value; pintarReporte(); }));
+const moverDia = n => { repDia = new Date(repDia.getFullYear(), repDia.getMonth(), repDia.getDate() + n); $("#rep-fecha").value = fFecha(repDia); ponerErrorRep(""); pintarReporte(); };
+$("#dia-ant").onclick = () => moverDia(-1);
+$("#dia-sig").onclick = () => moverDia(1);
+$("#dia-hoy").onclick = () => { repDia = new Date(); repDia.setHours(0, 0, 0, 0); moverDia(0); };
+$("#mes-ant").onclick = () => { repMes = new Date(repMes.getFullYear(), repMes.getMonth() - 1, 1); pintarReporte(); };
+$("#mes-sig").onclick = () => { repMes = new Date(repMes.getFullYear(), repMes.getMonth() + 1, 1); pintarReporte(); };
+$("#mes-hoy").onclick = () => { const h = new Date(); repMes = new Date(h.getFullYear(), h.getMonth(), 1); pintarReporte(); };
+function ponerErrorRep(msg) {
+  const el = $("#rep-fecha");
+  el.classList.toggle("invalido", !!msg);
+  $("#err-rep-fecha").textContent = msg;
+}
+$("#rep-fecha").addEventListener("input", e => {
+  e.target.value = e.target.value.replace(/[^\d/]/g, "");
+  const d = leerFecha(e.target.value);
+  if (d) { repDia = d; ponerErrorRep(""); pintarReporte(); }
+  else if (e.target.value.length >= 10) ponerErrorRep("Fecha no válida. Usa dd/mm/aaaa, por ejemplo " + fFecha(new Date()) + ".");
+});
+$("#rep-fecha").addEventListener("blur", e => {
+  if (!leerFecha(e.target.value)) ponerErrorRep("Fecha no válida. Usa dd/mm/aaaa, por ejemplo " + fFecha(new Date()) + ".");
+});
+
+/* ---------- Exportar a Excel (.xlsx real, generado sin internet) ---------- */
+const CRC_T = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+function crc32(u8) { let c = 0xFFFFFFFF; for (let i = 0; i < u8.length; i++) c = CRC_T[(c ^ u8[i]) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
+function crearZip(archivos) {
+  const enc = new TextEncoder(), partes = [], central = [];
+  let offset = 0;
+  for (const f of archivos) {
+    const nom = enc.encode(f.nombre), dat = enc.encode(f.texto), crc = crc32(dat);
+    const h = new DataView(new ArrayBuffer(30));
+    h.setUint32(0, 0x04034b50, true); h.setUint16(4, 20, true); h.setUint16(6, 0x0800, true);
+    h.setUint16(12, 0x21, true); h.setUint32(14, crc, true); h.setUint32(18, dat.length, true); h.setUint32(22, dat.length, true);
+    h.setUint16(26, nom.length, true);
+    partes.push(new Uint8Array(h.buffer), nom, dat);
+    const c = new DataView(new ArrayBuffer(46));
+    c.setUint32(0, 0x02014b50, true); c.setUint16(4, 20, true); c.setUint16(6, 20, true); c.setUint16(8, 0x0800, true);
+    c.setUint16(14, 0x21, true); c.setUint32(16, crc, true); c.setUint32(20, dat.length, true); c.setUint32(24, dat.length, true);
+    c.setUint16(28, nom.length, true); c.setUint32(42, offset, true);
+    central.push(new Uint8Array(c.buffer), nom);
+    offset += 30 + nom.length + dat.length;
+  }
+  const tam = central.reduce((a, b) => a + b.length, 0);
+  const e = new DataView(new ArrayBuffer(22));
+  e.setUint32(0, 0x06054b50, true); e.setUint16(8, archivos.length, true); e.setUint16(10, archivos.length, true);
+  e.setUint32(12, tam, true); e.setUint32(16, offset, true);
+  return new Blob([...partes, ...central, new Uint8Array(e.buffer)], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+}
+const xesc = s => String(s == null ? "" : s).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const colLetra = i => { let s = ""; i++; while (i) { const m = (i - 1) % 26; s = String.fromCharCode(65 + m) + s; i = Math.floor((i - 1) / 26); } return s; };
+function crearXlsx(titulo, cabecera, filas, anchos) {
+  const celda = (v, r, c, estilo) => {
+    const ref = colLetra(c) + r;
+    if (typeof v === "number") return `<c r="${ref}"${estilo ? ` s="${estilo}"` : ""}><v>${v}</v></c>`;
+    return `<c r="${ref}" t="inlineStr"${estilo ? ` s="${estilo}"` : ""}><is><t xml:space="preserve">${xesc(v)}</t></is></c>`;
+  };
+  const filasXml = [
+    `<row r="1">${celda(titulo, 1, 0, 2)}</row>`,
+    `<row r="3">${cabecera.map((v, c) => celda(v, 3, c, 1)).join("")}</row>`,
+    ...filas.map((f, i) => `<row r="${i + 4}">${f.map((v, c) => celda(v, i + 4, c)).join("")}</row>`)
+  ].join("");
+  const hoja = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetViews><sheetView workbookViewId="0"><pane ySplit="3" topLeftCell="A4" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><cols>${anchos.map((w, i) => `<col min="${i + 1}" max="${i + 1}" width="${w}" customWidth="1"/>`).join("")}</cols><sheetData>${filasXml}</sheetData></worksheet>`;
+  return crearZip([
+    { nombre: "[Content_Types].xml", texto: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>` },
+    { nombre: "_rels/.rels", texto: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>` },
+    { nombre: "xl/workbook.xml", texto: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="Visitas" sheetId="1" r:id="rId1"/></sheets></workbook>` },
+    { nombre: "xl/_rels/workbook.xml.rels", texto: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>` },
+    { nombre: "xl/styles.xml", texto: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="3"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font><font><b/><sz val="14"/><color rgb="FF1F3A5F"/><name val="Calibri"/></font></fonts><fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF1F3A5F"/><bgColor indexed="64"/></patternFill></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="3"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1"/><xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1"/></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>` },
+    { nombre: "xl/worksheets/sheet1.xml", texto: hoja }
+  ]);
+}
+function descargar(blob, nombre) {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = nombre;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+}
+$("#btn-excel").addEventListener("click", () => {
+  const lista = visitasDelPeriodo();
+  if (!lista.length) {
+    $("#err-excel").textContent = `No hay visitas ${repTipo === "dia" ? "el " : "en "}${nombrePeriodo()} para exportar.`;
+    return;
+  }
+  const cab = ["Fecha", "Nombre completo", "Tipo de documento", "N.° documento", "Empresa", "Área", "Anfitrión", "Anexo", "Motivo", "Hora de ingreso", "Hora de salida", "Permanencia", "Minutos"];
+  const filas = lista.map(v => {
+    const ing = new Date(v.ingreso);
+    const min = v.salida ? Math.floor(minutosEntre(v.ingreso, v.salida)) : "";
+    return [fFecha(ing), v.nombre, TIPOS[v.tipoDoc], v.numDoc, v.empresa || "—", v.area, v.anfitrion, v.anexo, v.motivo || "", fHora(ing),
+      v.salida ? salidaTexto(v) : "Sin salida", v.salida ? duracion(min) : "Sin salida", min];
+  });
+  const titulo = `Comercial Los Andes S.A.C. — Visitas ${repTipo === "dia" ? "del " : "de "}${nombrePeriodo()}`;
+  const blob = crearXlsx(titulo, cab, filas, [12, 30, 20, 14, 24, 12, 24, 8, 26, 14, 16, 16, 10]);
+  const nombre = repTipo === "dia"
+    ? `Visitas_${fFecha(repDia).replace(/\//g, "-")}.xlsx`
+    : `Visitas_${MESES[repMes.getMonth()]}_${repMes.getFullYear()}.xlsx`;
+  descargar(blob, nombre);
+  aviso(`Reporte exportado: ${nombre}`);
+});
+
+/* =====================================================================
+   Ajustes y copia de seguridad
+   ===================================================================== */
+const selCierre = $("#hora-cierre");
+for (let m = 15 * 60; m <= 22 * 60; m += 30) {
+  const v = pad(Math.floor(m / 60)) + ":" + pad(m % 60);
+  selCierre.insertAdjacentHTML("beforeend", `<option value="${v}">${v}</option>`);
+}
+selCierre.addEventListener("change", () => {
+  DB.horaCierre = selCierre.value;
+  DB.avisoMostrado = "";
+  guardarDB();
+  revisarCierre(false);
+  aviso("Hora de cierre guardada: " + DB.horaCierre);
+});
+function pintarAjustes() {
+  selCierre.value = DB.horaCierre;
+  const n = DB.visitas.length;
+  $("#resumen-datos").textContent = n ? `Hay ${n} visita${n === 1 ? "" : "s"} guardada${n === 1 ? "" : "s"} en este navegador.` : "Aún no hay visitas guardadas.";
+}
+$("#btn-descargar").addEventListener("click", () => {
+  const datos = { app: "registro-visitas-losandes", version: 1, exportado: new Date().toISOString(), visitas: DB.visitas, horaCierre: DB.horaCierre };
+  descargar(new Blob([JSON.stringify(datos, null, 2)], { type: "application/json" }), `Copia_Registro_Visitas_${fFecha(new Date()).replace(/\//g, "-")}.json`);
+  aviso("Copia de seguridad descargada.");
+});
+$("#btn-cargar").addEventListener("click", () => { $("#err-archivo").textContent = ""; $("#archivo").click(); });
+$("#archivo").addEventListener("change", e => {
+  const f = e.target.files[0];
+  e.target.value = "";
+  if (!f) return;
+  const lector = new FileReader();
+  lector.onload = async () => {
+    let d = null;
+    try { d = JSON.parse(lector.result); } catch (err) { /* archivo no es JSON */ }
+    const valido = d && d.app === "registro-visitas-losandes" && Array.isArray(d.visitas) &&
+      d.visitas.every(v => v && v.id && v.nombre && v.numDoc && v.ingreso && !isNaN(new Date(v.ingreso)));
+    if (!valido) {
+      $("#err-archivo").textContent = `El archivo “${f.name}” no es una copia de seguridad de este registro. Elige el .json que descargaste con “Descargar copia de seguridad”.`;
+      return;
+    }
+    const ok = await confirmar({
+      titulo: "¿Reemplazar los datos actuales?",
+      mensaje: `Se borrarán las ${DB.visitas.length} visita(s) de este navegador y se cargarán las ${d.visitas.length} de la copia “${f.name}”.`,
+      si: "Sí, reemplazar"
+    });
+    if (!ok) return;
+    DB.visitas = d.visitas;
+    if (d.horaCierre) DB.horaCierre = d.horaCierre;
+    guardarDB();
+    refrescar();
+    aviso(`Copia cargada: ${d.visitas.length} visita(s).`);
+  };
+  lector.onerror = () => { $("#err-archivo").textContent = "No se pudo leer el archivo. Intenta de nuevo."; };
+  lector.readAsText(f);
+});
+
+/* =====================================================================
+   Pestañas e inicio
+   ===================================================================== */
+let vista = "inicio";
+function mostrarVista(v) {
+  vista = v;
+  document.querySelectorAll(".tab").forEach(t => t.setAttribute("aria-selected", String(t.dataset.vista === v)));
+  ["inicio", "buscar", "reportes", "ajustes"].forEach(x => { $("#vista-" + x).hidden = x !== v; });
+  refrescar();
+  window.scrollTo({ top: 0 });
+}
+document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => mostrarVista(t.dataset.vista)));
+function refrescar() {
+  pintarDentro();
+  if (vista === "buscar") pintarBusqueda();
+  if (vista === "reportes") pintarReporte();
+  if (vista === "ajustes") pintarAjustes();
+}
+
+cargarDB();
+if (!almacenOK) $("#banner-almacen").hidden = false;
+tic();
+refrescar();
+revisarCierre(true);
+setInterval(() => {
+  tic();
+  if (vista === "inicio") pintarDentro();
+  revisarCierre(true);
+}, 30000);
+</script>
+</body>
+</html>
