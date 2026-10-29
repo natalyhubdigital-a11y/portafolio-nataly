@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Inspección de Almacén</title>
+<style>
+  :root {
+    --navy: #1f3a5f;
+    --navy-dark: #162b47;
+    --naranja: #d97757;
+    --fondo: #f3f5f8;
+    --tarjeta: #ffffff;
+    --texto: #1c2430;
+    --suave: #5b6675;
+    --borde: #cfd6df;
+    --linea: #e4e8ee;
+    --error: #b42318;
+    --error-fondo: #fdecea;
+    --verde: #1d7a3e;
+    --verde-fondo: #e3f4e8;
+    --ambar: #a35f00;
+    --ambar-fondo: #fff1d6;
+    --rojo: #c0261b;
+    --rojo-fondo: #fde6e3;
+    --gris-fondo: #eef1f5;
+  }
+  * { box-sizing: border-box; }
+  html { font-size: 18px; -webkit-text-size-adjust: 100%; }
+  body { margin: 0; background: var(--fondo); color: var(--texto); font-family: "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif; line-height: 1.45; }
+  button, input, select, textarea { font: inherit; color: inherit; }
+  [hidden] { display: none !important; }
+
+  /* ---------- Cabecera ---------- */
+  .top { background: var(--navy); color: #fff; }
+  .top-in { max-width: 1000px; margin: 0 auto; padding: 10px 16px; display: flex; align-items: center; gap: 12px 16px; flex-wrap: wrap; }
+  .marca { display: flex; align-items: center; gap: 12px; margin-right: auto; }
+  .marca svg { width: 44px; height: 44px; flex: none; }
+  .marca b { display: block; font-size: 1.15rem; line-height: 1.1; }
+  .marca span { font-size: .8rem; opacity: .85; }
+  .tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+  .tab { background: transparent; border: 2px solid rgba(255,255,255,.35); color: #fff; padding: 8px 16px; border-radius: 999px; cursor: pointer; font-weight: 600; min-height: 44px; }
+  .tab:hover { border-color: #fff; }
+  .tab[aria-selected="true"] { background: #fff; color: var(--navy); border-color: #fff; }
+
+  main { max-width: 1000px; margin: 0 auto; padding: 16px 16px 40px; }
+  h1 { font-size: 1.5rem; margin: 0 0 4px; color: var(--navy); }
+  h2 { font-size: 1.2rem; margin: 0 0 12px; color: var(--navy); }
+  .sub { color: var(--suave); margin: 0 0 16px; }
+  .card { background: var(--tarjeta); border: 1px solid var(--linea); border-radius: 12px; padding: 18px; margin-bottom: 16px; }
+
+  /* ---------- Botones ---------- */
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 10px 18px; border-radius: 10px; border: 2px solid var(--navy); background: #fff; color: var(--navy); font-weight: 700; cursor: pointer; text-align: center; }
+  .btn:hover { background: #eef2f7; }
+  .btn.primario { background: var(--navy); color: #fff; }
+  .btn.primario:hover { background: var(--navy-dark); }
+  .btn.peligro { border-color: var(--error); color: var(--error); }
+  .btn.peligro:hover { background: var(--error-fondo); }
+  .btn.peligro.lleno { background: var(--error); color: #fff; }
+  .btn.chico { min-height: 40px; padding: 6px 12px; font-size: .9rem; border-width: 1.5px; }
+  .acciones { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  button:focus-visible, input:focus, select:focus, textarea:focus { outline: 3px solid rgba(31,58,95,.35); outline-offset: 1px; }
+
+  /* ---------- Formularios ---------- */
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px 16px; }
+  .grid2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px 16px; }
+  .full { grid-column: 1 / -1; }
+  .campo label, .campo .etq { display: block; font-weight: 600; margin-bottom: 4px; font-size: .95rem; }
+  .opc { font-weight: 400; color: var(--suave); font-size: .85rem; }
+  input[type="text"], input[type="search"], textarea, select { width: 100%; padding: 10px 12px; border: 1.5px solid var(--borde); border-radius: 8px; background: #fff; min-height: 48px; }
+  textarea { min-height: 76px; resize: vertical; }
+  .invalido { border-color: var(--error) !important; background: var(--error-fondo) !important; }
+  .error { color: var(--error); font-size: .9rem; font-weight: 600; margin-top: 4px; }
+  .error:empty { display: none; }
+  .ayuda { color: var(--suave); font-size: .85rem; margin-top: 4px; }
+
+  /* ---------- Semáforo ---------- */
+  .sem { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 3px 12px; font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .sem::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: currentColor; }
+  .sem.verde { background: var(--verde-fondo); color: var(--verde); }
+  .sem.ambar { background: var(--ambar-fondo); color: var(--ambar); }
+  .sem.rojo { background: var(--rojo-fondo); color: var(--rojo); }
+  .sem.nd { background: var(--gris-fondo); color: var(--suave); }
+
+  /* ---------- Resumen fijo ---------- */
+  .resumen { position: sticky; top: 0; z-index: 15; background: var(--tarjeta); border-bottom: 1px solid var(--linea); box-shadow: 0 2px 8px rgba(0,0,0,.06); }
+  .resumen-in { max-width: 1000px; margin: 0 auto; padding: 10px 16px; display: flex; align-items: center; gap: 10px 18px; flex-wrap: wrap; }
+  .resumen .gen { font-size: 1.05rem; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+  .resumen .gen .sem { font-size: 1.15rem; }
+  .progreso { flex: 1 1 200px; }
+  .progreso .barra { height: 10px; background: var(--gris-fondo); border-radius: 999px; overflow: hidden; }
+  .progreso .barra i { display: block; height: 100%; background: var(--navy); width: 0; transition: width .2s; }
+  .progreso small { color: var(--suave); font-size: .85rem; }
+  .secciones-mini { display: flex; gap: 6px; flex-wrap: wrap; width: 100%; font-size: .85rem; }
+  .secciones-mini a { text-decoration: none; color: var(--texto); display: inline-flex; gap: 6px; align-items: center; background: var(--gris-fondo); border-radius: 999px; padding: 2px 4px 2px 10px; }
+  .secciones-mini .sem { padding: 1px 8px; font-size: .8rem; }
+
+  /* ---------- Puntos del checklist ---------- */
+  .seccion-cab { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 6px; }
+  .seccion-cab h2 { margin: 0; }
+  .punto { border-top: 1px solid var(--linea); padding: 14px 0; scroll-margin-top: 150px; }
+  .punto:first-of-type { border-top: 0; }
+  .punto .txt { font-weight: 600; margin-bottom: 8px; display: flex; gap: 10px; }
+  .punto .txt .n { color: var(--suave); font-variant-numeric: tabular-nums; min-width: 1.6em; }
+  .opciones { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .opciones label { display: flex; align-items: center; justify-content: center; min-height: 52px; padding: 6px 8px; border: 2px solid var(--borde); border-radius: 10px; cursor: pointer; font-weight: 700; text-align: center; background: #fff; line-height: 1.2; }
+  .opciones input { position: absolute; opacity: 0; pointer-events: none; }
+  .opciones label:has(input:focus-visible) { outline: 3px solid rgba(31,58,95,.35); }
+  .opciones label.op-C:has(input:checked) { background: var(--verde); border-color: var(--verde); color: #fff; }
+  .opciones label.op-NC:has(input:checked) { background: var(--rojo); border-color: var(--rojo); color: #fff; }
+  .opciones label.op-NA:has(input:checked) { background: #6b7685; border-color: #6b7685; color: #fff; }
+  .punto.sin-responder .opciones label { border-color: var(--error); }
+  .punto .falta { color: var(--error); font-weight: 600; font-size: .9rem; margin-top: 6px; }
+  .hallazgo { margin-top: 12px; background: var(--rojo-fondo); border-radius: 10px; padding: 14px; display: grid; gap: 12px; }
+  .hallazgo .campo label { color: #7a1a12; }
+  .hallazgo input, .hallazgo textarea { background: #fff; }
+  .foto-prev { display: flex; gap: 12px; align-items: flex-start; flex-wrap: wrap; }
+  .foto-prev img { max-width: 220px; max-height: 180px; border-radius: 8px; border: 1px solid var(--borde); display: block; }
+  .btn-foto { position: relative; overflow: hidden; }
+  .btn-foto input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+
+  .barra-final { position: sticky; bottom: 0; z-index: 15; background: rgba(243,245,248,.97); border-top: 1px solid var(--linea); padding: 10px 16px; margin: 0 -16px -40px; }
+  .barra-final .acciones { max-width: 1000px; margin: 0 auto; }
+  .aviso-general { color: var(--error); font-weight: 700; flex-basis: 100%; }
+  .aviso-general:empty { display: none; }
+  .estado { color: var(--suave); font-size: .9rem; margin: -4px 0 14px; }
+
+  /* ---------- Historial ---------- */
+  .tabla-caja { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: .92rem; }
+  th { text-align: left; color: var(--suave); font-size: .78rem; text-transform: uppercase; letter-spacing: .04em; padding: 8px; border-bottom: 2px solid var(--linea); white-space: nowrap; }
+  td { padding: 10px 8px; border-bottom: 1px solid var(--linea); vertical-align: middle; }
+  .c { text-align: center; }
+  .dif { font-size: .8rem; font-weight: 700; display: block; margin-top: 2px; }
+  .dif.sube { color: var(--verde); }
+  .dif.baja { color: var(--rojo); }
+  .dif.igual { color: var(--suave); }
+  .grafico { display: grid; gap: 8px; margin-top: 8px; }
+  .grafico .fila { display: grid; grid-template-columns: 110px 1fr 70px; gap: 10px; align-items: center; font-size: .9rem; }
+  .grafico .pista { height: 22px; background: var(--gris-fondo); border-radius: 6px; position: relative; overflow: hidden; }
+  .grafico .pista i { position: absolute; inset: 0 auto 0 0; border-radius: 6px; }
+  .grafico .pista .m90, .grafico .pista .m75 { position: absolute; top: 0; bottom: 0; width: 0; border-left: 2px dashed rgba(0,0,0,.25); }
+  .grafico .val { text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .leyenda { display: flex; gap: 14px; flex-wrap: wrap; font-size: .85rem; color: var(--suave); margin-top: 8px; }
+  .hist-item { display: grid; grid-template-columns: 1fr auto; gap: 8px 16px; padding: 14px 0; border-top: 1px solid var(--linea); align-items: center; }
+  .hist-item:first-child { border-top: 0; }
+  .hist-item .t { font-weight: 700; }
+  .hist-item .s { color: var(--suave); font-size: .9rem; }
+  .hist-item .acciones { grid-column: 1 / -1; gap: 6px; }
+  .vacio { color: var(--suave); text-align: center; padding: 24px 10px; }
+
+  /* ---------- Modal y toast ---------- */
+  .velo { position: fixed; inset: 0; background: rgba(15,25,40,.55); z-index: 50; display: flex; align-items: center; justify-content: center; padding: 16px; }
+  .modal { background: #fff; border-radius: 14px; padding: 22px; max-width: 480px; width: 100%; box-shadow: 0 20px 50px rgba(0,0,0,.3); }
+  .modal h3 { margin: 0 0 8px; font-size: 1.25rem; color: var(--navy); }
+  .modal p { margin: 0 0 18px; }
+  .modal .acciones { justify-content: flex-end; }
+  .toast { position: fixed; left: 50%; bottom: 90px; transform: translateX(-50%); z-index: 60; background: var(--texto); color: #fff; padding: 12px 20px; border-radius: 10px; max-width: calc(100% - 32px); box-shadow: 0 8px 24px rgba(0,0,0,.25); font-weight: 600; }
+  .banner { background: var(--error-fondo); color: var(--error); padding: 12px 16px; border-radius: 10px; margin-bottom: 14px; font-weight: 600; }
+  .medidor { height: 12px; background: var(--gris-fondo); border-radius: 999px; overflow: hidden; margin: 8px 0 4px; }
+  .medidor i { display: block; height: 100%; background: var(--navy); }
+
+  @media (max-width: 760px) {
+    html { font-size: 17px; }
+    .tabs { width: 100%; }
+    .tab { flex: 1; padding: 8px 6px; font-size: .9rem; }
+    .grid, .grid2 { grid-template-columns: 1fr; }
+    .card { padding: 14px; }
+    .opciones label { font-size: .88rem; padding: 6px 4px; }
+    .barra-final .btn { flex: 1 1 0; padding: 6px; font-size: .88rem; line-height: 1.2; }
+    .barra-final .acciones { gap: 6px; }
+    .grafico .fila { grid-template-columns: 76px 1fr 58px; }
+    .resumen .secciones-mini { display: none; }
+    .modal .acciones .btn { flex: 1 1 auto; }
+  }
+
+  /* ---------- Informe para imprimir ---------- */
+  #informe { display: none; }
+  @media print {
+    @page { size: A4; margin: 14mm 14mm 16mm; }
+    html { font-size: 10.5pt; }
+    body { background: #fff; }
+    .app, .velo, .toast { display: none !important; }
+    #informe { display: block; color: #111; }
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+  .inf { font-size: 10pt; line-height: 1.4; }
+  .inf-cab { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; padding-bottom: 10px; border-bottom: 3px solid var(--navy); }
+  .inf-marca { display: flex; gap: 12px; align-items: center; }
+  .inf-marca svg { width: 58px; height: 58px; }
+  .inf-marca .nom { font-size: 19pt; font-weight: 800; color: var(--navy); line-height: 1; }
+  .inf-marca .raz { color: #555; margin-top: 3px; }
+  .inf-tit { text-align: right; }
+  .inf-tit b { display: block; font-size: 12.5pt; color: var(--navy); }
+  .inf h4 { font-size: 9.5pt; text-transform: uppercase; letter-spacing: .08em; color: var(--navy); margin: 16px 0 6px; page-break-after: avoid; }
+  .inf-datos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px 20px; background: #f1f4f8; padding: 10px 14px; border-radius: 6px; }
+  .inf-datos span { display: block; color: #555; font-size: 8.5pt; }
+  .inf-res { display: flex; gap: 16px; align-items: stretch; }
+  .inf-gen { border: 2px solid; border-radius: 8px; padding: 10px 16px; text-align: center; min-width: 170px; }
+  .inf-gen b { display: block; font-size: 24pt; line-height: 1.1; }
+  .inf-gen.verde { border-color: var(--verde); color: var(--verde); background: var(--verde-fondo); }
+  .inf-gen.ambar { border-color: var(--ambar); color: var(--ambar); background: var(--ambar-fondo); }
+  .inf-gen.rojo { border-color: var(--rojo); color: var(--rojo); background: var(--rojo-fondo); }
+  .inf-gen.nd { border-color: #999; color: #555; }
+  .inf table { font-size: 9pt; }
+  .inf th { background: var(--navy); color: #fff; padding: 5px 6px; font-size: 8.5pt; letter-spacing: 0; text-transform: none; border: 0; white-space: normal; }
+  .inf td { padding: 5px 6px; border-bottom: 1px solid #d9dee5; vertical-align: top; }
+  .inf tr { page-break-inside: avoid; }
+  .inf .sem { padding: 0 8px; font-size: 8.5pt; }
+  .est-C { color: var(--verde); font-weight: 700; }
+  .est-NC { color: var(--rojo); font-weight: 700; }
+  .est-NA { color: #666; }
+  .inf-hall { border: 1px solid #d9dee5; border-left: 4px solid var(--rojo); border-radius: 6px; padding: 8px 12px; margin-bottom: 8px; page-break-inside: avoid; display: flex; gap: 14px; }
+  .inf-hall .tx { flex: 1; }
+  .inf-hall img { max-width: 62mm; max-height: 50mm; border-radius: 4px; border: 1px solid #ccc; }
+  .inf-firma { margin-top: 50px; width: 260px; text-align: center; page-break-inside: avoid; }
+  .inf-firma .raya { border-top: 1.5px solid #111; margin-bottom: 4px; }
+  .inf-pie { margin-top: 18px; font-size: 8pt; color: #777; text-align: center; }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header class="top">
+    <div class="top-in">
+      <div class="marca">
+        <svg viewBox="0 0 120 120" aria-hidden="true"><rect width="120" height="120" rx="18" fill="#1f3a5f" stroke="rgba(255,255,255,.35)" stroke-width="3"/><polygon points="60,30 25,100 95,100" fill="#d97757"/><polygon points="75,55 50,100 100,100" fill="#fff"/></svg>
+        <div><b>Inspección de Almacén</b><span>Comercial Los Andes S.A.C. · SST</span></div>
+      </div>
+      <nav class="tabs" role="tablist">
+        <button class="tab" role="tab" data-vista="inspeccion" aria-selected="true">Inspección</button>
+        <button class="tab" role="tab" data-vista="historial" aria-selected="false">Historial</button>
+        <button class="tab" role="tab" data-vista="respaldo" aria-selected="false">Copia de seguridad</button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Resumen fijo mientras se recorre el almacén -->
+  <div class="resumen" id="resumen">
+    <div class="resumen-in">
+      <div class="gen">Cumplimiento <span class="sem nd" id="r-gen">—</span></div>
+      <div class="progreso">
+        <div class="barra"><i id="r-barra"></i></div>
+        <small id="r-prog">0 de 20 puntos respondidos</small>
+      </div>
+      <div class="secciones-mini" id="r-secciones"></div>
+    </div>
+  </div>
+
+  <main>
+    <div id="banner-almacen" class="banner" hidden>Este navegador no permite guardar datos (modo privado o bloqueado). Lo que registres se perderá al cerrar. Usa “Descargar copia de seguridad”.</div>
+
+    <!-- ================= INSPECCIÓN ================= -->
+    <section id="vista-inspeccion">
+      <h1 id="titulo-insp">Nueva inspección</h1>
+      <p class="estado" id="estado"></p>
+
+      <div class="card">
+        <h2>Datos de la inspección</h2>
+        <div class="grid">
+          <div class="campo">
+            <label for="fecha">Fecha</label>
+            <input type="text" id="fecha" inputmode="numeric" maxlength="10" placeholder="dd/mm/aaaa">
+            <div class="error" id="err-fecha"></div>
+          </div>
+          <div class="campo">
+            <label for="inspector">Inspector</label>
+            <input type="text" id="inspector" autocomplete="name">
+            <div class="error" id="err-inspector"></div>
+          </div>
+          <div class="campo">
+            <label for="area">Área inspeccionada</label>
+            <input type="text" id="area" list="areas" placeholder="Ej. Almacén principal">
+            <datalist id="areas"></datalist>
+            <div class="error" id="err-area"></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="checklist"></div>
+
+      <div class="barra-final">
+        <div class="acciones">
+          <span class="aviso-general" id="aviso-general"></span>
+          <button class="btn primario" id="btn-guardar">Guardar inspección</button>
+          <button class="btn primario" id="btn-informe">Imprimir / Guardar PDF</button>
+          <button class="btn" id="btn-nueva">Nueva</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= HISTORIAL ================= -->
+    <section id="vista-historial" hidden>
+      <h1>Historial de inspecciones</h1>
+      <p class="sub">Compara el cumplimiento mes a mes y vuelve a abrir o imprimir inspecciones anteriores.</p>
+      <div class="card">
+        <h2>Cumplimiento general por mes</h2>
+        <div id="grafico"></div>
+      </div>
+      <div class="card">
+        <h2>Comparación por sección</h2>
+        <div class="tabla-caja" id="comparacion"></div>
+      </div>
+      <div class="card">
+        <h2>Inspecciones guardadas</h2>
+        <div id="lista-hist"></div>
+      </div>
+    </section>
+
+    <!-- ================= RESPALDO ================= -->
+    <section id="vista-respaldo" hidden>
+      <h1>Copia de seguridad</h1>
+      <p class="sub">Los datos y las fotos se guardan solos en este navegador. Descarga una copia después de cada inspección para no perder nada si cambias de celular o se borra el navegador.</p>
+      <div class="card">
+        <h2>Espacio usado</h2>
+        <div class="medidor"><i id="medidor"></i></div>
+        <p id="espacio" style="margin:0"></p>
+      </div>
+      <div class="card">
+        <h2>Descargar copia de seguridad</h2>
+        <p id="resumen-datos" style="margin-top:0"></p>
+        <button class="btn primario" id="btn-descargar">Descargar copia de seguridad</button>
+      </div>
+      <div class="card">
+        <h2>Cargar copia de seguridad</h2>
+        <p style="margin-top:0">Reemplaza los datos de este navegador por los de un archivo de copia (.json).</p>
+        <button class="btn" id="btn-cargar">Cargar copia de seguridad</button>
+        <input type="file" id="archivo" accept=".json,application/json" hidden>
+        <div class="error" id="err-archivo"></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div id="informe"></div>
+
+<script>
+"use strict";
+
+/* =====================================================================
+   Checklist (de Checklist_Inspeccion_Almacen.xlsx)
+   ===================================================================== */
+const PUNTOS = [
+  ["Orden y limpieza", 1, "Pasillos y vías de circulación libres de obstáculos"],
+  ["Orden y limpieza", 2, "Materiales apilados a menos de 1.8 m de altura"],
+  ["Orden y limpieza", 3, "Pisos sin derrames de líquidos ni grasa"],
+  ["Orden y limpieza", 4, "Residuos depositados en contenedores rotulados"],
+  ["Orden y limpieza", 5, "Área de despacho despejada y señalizada"],
+  ["Extintores y señalización", 6, "Extintores con carga vigente (revisar la tarjeta)"],
+  ["Extintores y señalización", 7, "Acceso libre a todos los extintores"],
+  ["Extintores y señalización", 8, "Señalización de salidas de emergencia visible"],
+  ["Extintores y señalización", 9, "Luces de emergencia operativas (probar)"],
+  ["Extintores y señalización", 10, "Mapa de evacuación publicado y actualizado"],
+  ["Instalaciones eléctricas", 11, "Tableros eléctricos cerrados y rotulados"],
+  ["Instalaciones eléctricas", 12, "Sin cables expuestos ni empalmes sin aislar"],
+  ["Instalaciones eléctricas", 13, "Tomacorrientes sin sobrecarga (sin múltiples adaptadores)"],
+  ["Instalaciones eléctricas", 14, "Sin extensiones eléctricas de uso permanente"],
+  ["Instalaciones eléctricas", 15, "Iluminación suficiente en todas las zonas"],
+  ["Almacenamiento", 16, "Estanterías ancladas a la pared o al piso"],
+  ["Almacenamiento", 17, "Productos pesados en los niveles inferiores"],
+  ["Almacenamiento", 18, "Productos rotulados con nombre y código"],
+  ["Almacenamiento", 19, "Productos químicos separados y con hoja de seguridad"],
+  ["Almacenamiento", 20, "Registro de entradas y salidas al día"]
+].map(([seccion, n, texto]) => ({ seccion, n, texto }));
+const SECCIONES = [...new Set(PUNTOS.map(p => p.seccion))];
+const SEC_CORTA = { "Orden y limpieza": "Orden", "Extintores y señalización": "Extintores", "Instalaciones eléctricas": "Eléctricas", "Almacenamiento": "Almacenam." };
+const ESTADOS = { C: "Conforme", NC: "No conforme", NA: "No aplica" };
+const MESES = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+const CLAVE = "inspeccion_almacen_losandes_v1";
+const FOTO_LADO_MAX = 1000, FOTO_CALIDAD = 0.6;
+const LOGO_SVG = '<svg viewBox="0 0 120 120" aria-hidden="true"><rect width="120" height="120" rx="18" fill="#1f3a5f"/><polygon points="60,30 25,100 95,100" fill="#d97757"/><polygon points="75,55 50,100 100,100" fill="#fff"/></svg>';
+
+/* =====================================================================
+   Utilidades
+   ===================================================================== */
+const $ = s => document.querySelector(s);
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const pad = n => String(n).padStart(2, "0");
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+const fFecha = d => pad(d.getDate()) + "/" + pad(d.getMonth() + 1) + "/" + d.getFullYear();
+const hoy = () => fFecha(new Date());
+function leerFecha(s) {
+  const m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(String(s || "").trim());
+  if (!m) return null;
+  const d = new Date(+m[3], +m[2] - 1, +m[1]);
+  return d.getDate() === +m[1] && d.getMonth() === +m[2] - 1 && +m[3] >= 2000 ? d : null;
+}
+const ordenFecha = s => { const d = leerFecha(s); return d ? d.getTime() : 0; };
+// Porcentaje truncado a 1 decimal para que el semáforo y el número mostrado coincidan (89.96 → 89.9, ámbar)
+const pctTxt = p => p == null ? "—" : String(Math.floor(p * 10) / 10) + " %";
+const color = p => p == null ? "nd" : p >= 90 ? "verde" : p >= 75 ? "ambar" : "rojo";
+const NOMBRE_COLOR = { verde: "Verde", ambar: "Ámbar", rojo: "Rojo", nd: "Sin dato" };
+const sem = p => `<span class="sem ${color(p)}">${pctTxt(p)}</span>`;
+
+/* =====================================================================
+   Cálculo de cumplimiento
+   ===================================================================== */
+// completo = true aplica la fórmula oficial: conformes / (total − no aplica).
+// Mientras faltan puntos se muestra un valor parcial sobre los puntos ya respondidos.
+function calcular(resp, puntos = PUNTOS) {
+  let c = 0, nc = 0, na = 0;
+  puntos.forEach(p => {
+    const e = resp[p.n] && resp[p.n].estado;
+    if (e === "C") c++; else if (e === "NC") nc++; else if (e === "NA") na++;
+  });
+  const respondidos = c + nc + na, total = puntos.length;
+  const completo = respondidos === total;
+  const base = completo ? total - na : c + nc;
+  return { c, nc, na, respondidos, total, completo, pct: base > 0 ? (c / base) * 100 : null };
+}
+const porSeccion = resp => SECCIONES.map(s => ({ seccion: s, ...calcular(resp, PUNTOS.filter(p => p.seccion === s)) }));
+
+/* =====================================================================
+   Almacenamiento
+   ===================================================================== */
+let DB = { inspecciones: [], borrador: null, inspector: "" };
+let almacenOK = true;
+function cargarDB() {
+  try {
+    const raw = localStorage.getItem(CLAVE);
+    if (raw) DB = Object.assign(DB, JSON.parse(raw));
+    localStorage.setItem(CLAVE + "_p", "1");
+    localStorage.removeItem(CLAVE + "_p");
+  } catch (e) { almacenOK = false; }
+}
+let avisoLleno = false;
+function guardarDB() {
+  try {
+    localStorage.setItem(CLAVE, JSON.stringify(DB));
+    avisoLleno = false;
+    return true;
+  } catch (e) {
+    if (!almacenOK) { $("#banner-almacen").hidden = false; return false; }
+    if (!avisoLleno) {
+      avisoLleno = true;
+      confirmar({
+        titulo: "Memoria del navegador llena",
+        mensaje: "No se pudo guardar el último cambio porque no queda espacio (las fotos ocupan mucho). Descarga una copia de seguridad y luego elimina inspecciones antiguas del historial para liberar espacio.",
+        si: "Entendido", peligro: false, soloOk: true
+      });
+    }
+    return false;
+  }
+}
+const bytesUsados = () => { try { return (localStorage.getItem(CLAVE) || "").length * 2; } catch (e) { return 0; } };
+
+/* =====================================================================
+   Toast y confirmación
+   ===================================================================== */
+let toastTimer;
+function aviso(msg) {
+  let t = $(".toast");
+  if (!t) { t = document.createElement("div"); t.className = "toast"; t.setAttribute("role", "status"); document.body.appendChild(t); }
+  t.textContent = msg; t.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.hidden = true; }, 3200);
+}
+function confirmar({ titulo, mensaje, si = "Sí, borrar", no = "Cancelar", peligro = true, soloOk = false }) {
+  return new Promise(resolve => {
+    const velo = document.createElement("div");
+    velo.className = "velo";
+    velo.innerHTML = `<div class="modal" role="alertdialog" aria-modal="true" aria-labelledby="m-t">
+      <h3 id="m-t">${esc(titulo)}</h3><p>${esc(mensaje)}</p>
+      <div class="acciones">${soloOk ? "" : `<button class="btn" data-r="0">${esc(no)}</button>`}
+      <button class="btn ${peligro ? "peligro lleno" : "primario"}" data-r="1">${esc(si)}</button></div></div>`;
+    const previo = document.activeElement;
+    const cerrar = r => { velo.remove(); document.removeEventListener("keydown", tecla); if (previo && previo.focus) previo.focus({ preventScroll: true }); resolve(r); };
+    const tecla = e => { if (e.key === "Escape") cerrar(false); };
+    velo.addEventListener("click", e => {
+      if (e.target === velo) return cerrar(false);
+      const b = e.target.closest("[data-r]");
+      if (b) cerrar(b.dataset.r === "1");
+    });
+    document.addEventListener("keydown", tecla);
+    document.body.appendChild(velo);
+    velo.querySelector(soloOk ? '[data-r="1"]' : '[data-r="0"]').focus();
+  });
+}
+
+/* =====================================================================
+   Editor de inspección
+   ===================================================================== */
+let ed;
+const editorVacio = () => ({ id: null, fecha: hoy(), inspector: DB.inspector || "", area: "", resp: {}, sucio: false });
+const resp = n => (ed.resp[n] = ed.resp[n] || { estado: "", obs: "", foto: "", accion: "", responsable: "", limite: "" });
+
+function pintarChecklist() {
+  $("#checklist").innerHTML = SECCIONES.map((s, i) => `
+    <div class="card" id="sec-${i}">
+      <div class="seccion-cab"><h2>${esc(s)}</h2><span class="sem nd" data-sem-sec="${i}">—</span></div>
+      ${PUNTOS.filter(p => p.seccion === s).map(pintarPunto).join("")}
+    </div>`).join("");
+}
+function pintarPunto(p) {
+  const r = ed.resp[p.n] || {};
+  return `<div class="punto" id="p-${p.n}" data-n="${p.n}">
+    <div class="txt"><span class="n">${p.n}.</span><span>${esc(p.texto)}</span></div>
+    <div class="opciones" role="radiogroup" aria-label="Punto ${p.n}">
+      ${Object.entries(ESTADOS).map(([k, v]) => `<label class="op-${k}"><input type="radio" name="e-${p.n}" value="${k}" ${r.estado === k ? "checked" : ""}><span>${v}</span></label>`).join("")}
+    </div>
+    <div class="falta" data-falta></div>
+    <div class="hallazgo" data-hallazgo ${r.estado === "NC" ? "" : "hidden"}>${r.estado === "NC" ? htmlHallazgo(p.n) : ""}</div>
+  </div>`;
+}
+function htmlHallazgo(n) {
+  const r = resp(n);
+  return `
+    <div class="campo">
+      <label for="obs-${n}">Observación (obligatoria)</label>
+      <textarea id="obs-${n}" data-k="obs" placeholder="Describe qué encontraste y dónde">${esc(r.obs)}</textarea>
+      <div class="error" id="err-obs-${n}"></div>
+    </div>
+    <div class="campo">
+      <span class="etq">Foto <span class="opc">(opcional)</span></span>
+      <div class="foto-prev">
+        ${r.foto ? `<img src="${r.foto}" alt="Foto del hallazgo del punto ${n}">` : ""}
+        <div class="acciones">
+          <span class="btn chico btn-foto">${r.foto ? "Cambiar foto" : "Tomar o adjuntar foto"}<input type="file" accept="image/*" capture="environment" data-foto="${n}" aria-label="Foto del punto ${n}"></span>
+          ${r.foto ? `<button type="button" class="btn chico peligro" data-quitar-foto="${n}">Quitar foto</button>` : ""}
+        </div>
+      </div>
+      <div class="error" id="err-foto-${n}"></div>
+    </div>
+    <div class="campo">
+      <label for="acc-${n}">Acción correctiva</label>
+      <textarea id="acc-${n}" data-k="accion" placeholder="Qué se hará para corregirlo">${esc(r.accion)}</textarea>
+    </div>
+    <div class="grid2">
+      <div class="campo">
+        <label for="resp-${n}">Responsable</label>
+        <input type="text" id="resp-${n}" data-k="responsable" value="${esc(r.responsable)}">
+      </div>
+      <div class="campo">
+        <label for="lim-${n}">Fecha límite</label>
+        <input type="text" id="lim-${n}" data-k="limite" inputmode="numeric" maxlength="10" placeholder="dd/mm/aaaa" value="${esc(r.limite)}">
+        <div class="error" id="err-limite-${n}"></div>
+      </div>
+    </div>`;
+}
+
+function pintarResumen() {
+  const g = calcular(ed.resp);
+  const el = $("#r-gen");
+  el.className = "sem " + color(g.pct);
+  el.textContent = pctTxt(g.pct) + (g.completo || g.pct == null ? "" : " parcial");
+  $("#r-barra").style.width = (g.respondidos / g.total * 100) + "%";
+  $("#r-prog").textContent = g.completo
+    ? `20 de 20 respondidos · ${g.c} conformes, ${g.nc} no conformes, ${g.na} no aplica`
+    : `${g.respondidos} de ${g.total} puntos respondidos${g.respondidos ? " · el porcentaje final se calcula al completar los 20" : ""}`;
+  const secs = porSeccion(ed.resp);
+  $("#r-secciones").innerHTML = secs.map((s, i) => `<a href="#sec-${i}">${esc(SEC_CORTA[s.seccion])} ${sem(s.pct)}</a>`).join("");
+  secs.forEach((s, i) => {
+    const e = document.querySelector(`[data-sem-sec="${i}"]`);
+    if (e) { e.className = "sem " + color(s.pct); e.textContent = pctTxt(s.pct); }
+  });
+}
+
+function pintarEstado() {
+  const q = ed.id && DB.inspecciones.find(x => x.id === ed.id);
+  $("#titulo-insp").textContent = q ? `Inspección del ${q.fecha}` : "Nueva inspección";
+  $("#estado").textContent = q
+    ? (ed.sucio ? "Tiene cambios sin guardar. El borrador está a salvo en este celular." : "Guardada en el historial.")
+    : "El avance se guarda solo mientras recorres el almacén. Pulsa “Guardar inspección” al terminar.";
+}
+
+function marcarCambio() {
+  ed.sucio = true;
+  DB.borrador = ed;
+  guardarDB();
+  pintarEstado();
+  $("#aviso-general").textContent = "";
+}
+
+function cargarEditor() {
+  $("#fecha").value = ed.fecha;
+  $("#inspector").value = ed.inspector;
+  $("#area").value = ed.area;
+  ["fecha", "inspector", "area"].forEach(id => ponerError($("#" + id), ""));
+  $("#aviso-general").textContent = "";
+  const areas = [...new Set(DB.inspecciones.map(q => q.area).filter(Boolean))];
+  $("#areas").innerHTML = (areas.length ? areas : ["Almacén principal"]).map(a => `<option value="${esc(a)}">`).join("");
+  pintarChecklist();
+  pintarResumen();
+  pintarEstado();
+}
+
+/* ---------- Validaciones ---------- */
+function ponerError(input, msg, errEl) {
+  input.classList.toggle("invalido", !!msg);
+  input.setAttribute("aria-invalid", msg ? "true" : "false");
+  const e = errEl || $("#err-" + input.id);
+  if (e) e.textContent = msg || "";
+}
+const REGLAS = {
+  fecha: v => leerFecha(v) ? "" : "Escribe una fecha válida con el formato dd/mm/aaaa (ej. " + hoy() + ").",
+  inspector: v => v.trim() ? "" : "Escribe el nombre del inspector.",
+  area: v => v.trim() ? "" : "Escribe el área inspeccionada."
+};
+const validarDato = id => { const el = $("#" + id), m = REGLAS[id](el.value); ponerError(el, m); return !m; };
+function errLimite(n) {
+  const v = resp(n).limite.trim();
+  if (!v) return "";
+  const d = leerFecha(v);
+  if (!d) return "Fecha no válida. Usa dd/mm/aaaa.";
+  const f = leerFecha(ed.fecha);
+  if (f && d < f) return "La fecha límite no puede ser anterior a la fecha de la inspección.";
+  return "";
+}
+const errObs = n => resp(n).estado === "NC" && !resp(n).obs.trim() ? "Escribe la observación: es obligatoria para un “No conforme”." : "";
+
+["fecha", "inspector", "area"].forEach(id => {
+  const el = $("#" + id);
+  el.addEventListener("input", () => {
+    if (id === "fecha") el.value = el.value.replace(/[^\d/]/g, "");
+    ed[id] = el.value;
+    if (id === "inspector") DB.inspector = el.value;
+    if (el.classList.contains("invalido")) validarDato(id);
+    marcarCambio();
+  });
+  el.addEventListener("blur", () => { if (el.value || id === "fecha") validarDato(id); });
+});
+
+/* ---------- Respuestas ---------- */
+$("#checklist").addEventListener("change", e => {
+  const radio = e.target.closest('input[type="radio"]');
+  if (radio) {
+    const punto = radio.closest(".punto"), n = +punto.dataset.n;
+    const r = resp(n);
+    r.estado = radio.value;
+    punto.classList.remove("sin-responder");
+    punto.querySelector("[data-falta]").textContent = "";
+    const caja = punto.querySelector("[data-hallazgo]");
+    if (r.estado === "NC") {
+      caja.innerHTML = htmlHallazgo(n);
+      caja.hidden = false;
+    } else {
+      caja.hidden = true;
+      caja.innerHTML = "";
+    }
+    pintarResumen();
+    marcarCambio();
+    return;
+  }
+  const file = e.target.closest("[data-foto]");
+  if (file && file.files[0]) adjuntarFoto(+file.dataset.foto, file.files[0]);
+});
+$("#checklist").addEventListener("input", e => {
+  const el = e.target.closest("[data-k]");
+  if (!el) return;
+  const n = +el.closest(".punto").dataset.n, k = el.dataset.k;
+  if (k === "limite") el.value = el.value.replace(/[^\d/]/g, "");
+  resp(n)[k] = el.value;
+  if (k === "obs" && el.classList.contains("invalido")) ponerError(el, errObs(n));
+  if (k === "limite" && el.classList.contains("invalido")) ponerError(el, errLimite(n), $("#err-limite-" + n));
+  marcarCambio();
+});
+$("#checklist").addEventListener("focusout", e => {
+  const el = e.target.closest("[data-k]");
+  if (!el) return;
+  const n = +el.closest(".punto").dataset.n;
+  if (el.dataset.k === "obs") ponerError(el, errObs(n));
+  if (el.dataset.k === "limite") ponerError(el, errLimite(n), $("#err-limite-" + n));
+});
+$("#checklist").addEventListener("click", async e => {
+  const b = e.target.closest("[data-quitar-foto]");
+  if (!b) return;
+  const n = +b.dataset.quitarFoto;
+  const ok = await confirmar({ titulo: "¿Quitar la foto?", mensaje: `Se borrará la foto del punto ${n}.`, si: "Sí, quitar" });
+  if (!ok) return;
+  resp(n).foto = "";
+  refrescarHallazgo(n);
+  marcarCambio();
+});
+function refrescarHallazgo(n) {
+  const caja = document.querySelector(`#p-${n} [data-hallazgo]`);
+  caja.innerHTML = htmlHallazgo(n);
+}
+
+/* ---------- Fotos: se reducen antes de guardarlas ---------- */
+function reducirFoto(file) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      const factor = Math.min(1, FOTO_LADO_MAX / Math.max(img.naturalWidth, img.naturalHeight));
+      const w = Math.round(img.naturalWidth * factor), h = Math.round(img.naturalHeight * factor);
+      const cv = document.createElement("canvas");
+      cv.width = w; cv.height = h;
+      const ctx = cv.getContext("2d");
+      ctx.fillStyle = "#fff";
+      ctx.fillRect(0, 0, w, h);
+      ctx.drawImage(img, 0, 0, w, h);
+      URL.revokeObjectURL(url);
+      resolve(cv.toDataURL("image/jpeg", FOTO_CALIDAD));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(); };
+    img.src = url;
+  });
+}
+async function adjuntarFoto(n, file) {
+  const err = $("#err-foto-" + n);
+  if (!/^image\//.test(file.type)) { err.textContent = "El archivo no es una imagen. Elige una foto (JPG o PNG)."; return; }
+  try {
+    const dataUrl = await reducirFoto(file);
+    resp(n).foto = dataUrl;
+    refrescarHallazgo(n);
+    marcarCambio();
+    const kb = Math.round(dataUrl.length * 3 / 4 / 1024);
+    aviso(`Foto adjuntada al punto ${n} (reducida a ${kb} KB).`);
+  } catch (e) {
+    err.textContent = "No se pudo leer la foto. Prueba con otra o toma la foto de nuevo.";
+  }
+}
+
+/* ---------- Guardar e informe ---------- */
+function validar(paraInforme) {
+  let primero = null;
+  const marcar = el => { if (!primero) primero = el; };
+  ["fecha", "inspector", "area"].forEach(id => { if (!validarDato(id)) marcar($("#" + id)); });
+  let faltan = 0, sinObs = 0;
+  PUNTOS.forEach(p => {
+    const r = ed.resp[p.n] || {};
+    const punto = $("#p-" + p.n);
+    if (!r.estado) {
+      if (paraInforme) {
+        faltan++;
+        punto.classList.add("sin-responder");
+        punto.querySelector("[data-falta]").textContent = "Falta responder este punto.";
+        marcar(punto.querySelector("input"));
+      }
+      return;
+    }
+    if (r.estado === "NC") {
+      const o = $("#obs-" + p.n), m = errObs(p.n);
+      ponerError(o, m);
+      if (m) { sinObs++; marcar(o); }
+      const l = $("#lim-" + p.n), ml = errLimite(p.n);
+      ponerError(l, ml, $("#err-limite-" + p.n));
+      if (ml) marcar(l);
+    }
+  });
+  if (primero) {
+    const partes = [];
+    if (faltan) partes.push(faltan === 1 ? "falta 1 punto por responder" : `faltan ${faltan} puntos por responder`);
+    if (sinObs) partes.push(`${sinObs} “No conforme” sin observación`);
+    $("#aviso-general").textContent = (paraInforme ? "No se puede generar el informe: " : "No se puede guardar: ") +
+      (partes.length ? partes.join(" y ") : "revisa los campos marcados en rojo") + ".";
+    primero.scrollIntoView({ block: "center", behavior: "smooth" });
+    setTimeout(() => primero.focus({ preventScroll: true }), 350);
+    return false;
+  }
+  return true;
+}
+
+function guardarInspeccion(paraInforme) {
+  if (!validar(paraInforme)) return null;
+  const respuestas = {};
+  PUNTOS.forEach(p => {
+    const r = ed.resp[p.n];
+    if (!r || !r.estado) return;
+    respuestas[p.n] = r.estado === "NC"
+      ? { estado: "NC", obs: r.obs.trim(), foto: r.foto || "", accion: r.accion.trim(), responsable: r.responsable.trim(), limite: r.limite.trim() }
+      : { estado: r.estado };
+  });
+  const g = calcular(respuestas);
+  const previa = ed.id ? DB.inspecciones.find(q => q.id === ed.id) : null;
+  const ahora = new Date().toISOString();
+  const q = {
+    id: previa ? previa.id : uid(),
+    fecha: ed.fecha.trim(), inspector: ed.inspector.trim(), area: ed.area.trim(),
+    respuestas, completa: g.completo, pct: g.completo ? g.pct : null,
+    creada: previa ? previa.creada : ahora, modificada: ahora
+  };
+  if (previa) DB.inspecciones[DB.inspecciones.indexOf(previa)] = q;
+  else DB.inspecciones.push(q);
+  const antes = { id: ed.id, sucio: ed.sucio };
+  ed.id = q.id;
+  ed.sucio = false;
+  DB.borrador = ed;
+  if (!guardarDB()) {
+    // No hubo espacio: deshacer para no mostrar como guardado algo que no lo está
+    if (previa) DB.inspecciones[DB.inspecciones.indexOf(q)] = previa;
+    else DB.inspecciones = DB.inspecciones.filter(x => x !== q);
+    ed.id = antes.id; ed.sucio = antes.sucio;
+    return null;
+  }
+  pintarEstado();
+  return { q, nueva: !previa };
+}
+
+$("#btn-guardar").addEventListener("click", () => {
+  const r = guardarInspeccion(false);
+  if (!r) return;
+  aviso(r.q.completa
+    ? `Inspección guardada. Cumplimiento: ${pctTxt(r.q.pct)} (${NOMBRE_COLOR[color(r.q.pct)]}).`
+    : `Inspección guardada como incompleta: ${20 - Object.keys(r.q.respuestas).length === 1 ? "falta 1 punto" : "faltan " + (20 - Object.keys(r.q.respuestas).length) + " puntos"}.`);
+});
+$("#btn-informe").addEventListener("click", () => {
+  const r = guardarInspeccion(true);
+  if (r) imprimir(r.q);
+});
+async function descartarSiHayCambios() {
+  const tieneAlgo = Object.values(ed.resp).some(r => r.estado) || ed.area.trim();
+  if (!ed.sucio || !tieneAlgo) return true;
+  return confirmar({ titulo: "Hay cambios sin guardar", mensaje: "La inspección en pantalla tiene cambios que no se guardaron en el historial. Si continúas, se borrarán.", si: "Sí, descartar cambios" });
+}
+$("#btn-nueva").addEventListener("click", async () => {
+  if (!(await descartarSiHayCambios())) return;
+  ed = editorVacio();
+  DB.borrador = ed;
+  guardarDB();
+  cargarEditor();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+});
+
+/* =====================================================================
+   Informe imprimible
+   ===================================================================== */
+function htmlInforme(q) {
+  const g = calcular(q.respuestas);
+  const secs = porSeccion(q.respuestas);
+  const hallazgos = PUNTOS.filter(p => q.respuestas[p.n] && q.respuestas[p.n].estado === "NC");
+  const porDefinir = '<i style="color:#999">Por definir</i>';
+  return `<div class="inf">
+    <div class="inf-cab">
+      <div class="inf-marca">${LOGO_SVG}<div><div class="nom">Los Andes</div><div class="raz">Comercial Los Andes S.A.C.</div></div></div>
+      <div class="inf-tit"><b>Informe de inspección de SST</b>Almacén · ${esc(q.fecha)}</div>
+    </div>
+    <h4>Datos de la inspección</h4>
+    <div class="inf-datos">
+      <div><span>Fecha</span>${esc(q.fecha)}</div>
+      <div><span>Inspector</span>${esc(q.inspector)}</div>
+      <div><span>Área inspeccionada</span>${esc(q.area)}</div>
+    </div>
+    <h4>Resultado</h4>
+    <div class="inf-res">
+      <div class="inf-gen ${color(g.pct)}"><span>Cumplimiento general</span><b>${pctTxt(g.pct)}</b>${NOMBRE_COLOR[color(g.pct)]}</div>
+      <table style="flex:1">
+        <thead><tr><th>Sección</th><th class="c">Conformes</th><th class="c">No conformes</th><th class="c">No aplica</th><th class="c">Cumplimiento</th></tr></thead>
+        <tbody>${secs.map(s => `<tr><td>${esc(s.seccion)}</td><td class="c">${s.c}</td><td class="c">${s.nc}</td><td class="c">${s.na}</td><td class="c">${sem(s.pct)}</td></tr>`).join("")}
+        <tr><td><b>Total</b></td><td class="c"><b>${g.c}</b></td><td class="c"><b>${g.nc}</b></td><td class="c"><b>${g.na}</b></td><td class="c">${sem(g.pct)}</td></tr></tbody>
+      </table>
+    </div>
+    <p style="font-size:8.5pt;color:#555;margin:6px 0 0">Cumplimiento = conformes ÷ (20 − no aplica) = ${g.c} ÷ ${20 - g.na}. Semáforo: verde 90 % o más · ámbar de 75 % a 89 % · rojo menos de 75 %.</p>
+    <h4>Detalle de los 20 puntos</h4>
+    <table>
+      <thead><tr><th class="c" style="width:34px;white-space:nowrap">N.°</th><th>Punto verificado</th><th>Sección</th><th>Resultado</th></tr></thead>
+      <tbody>${PUNTOS.map(p => { const e = q.respuestas[p.n] ? q.respuestas[p.n].estado : ""; return `<tr><td class="c">${p.n}</td><td>${esc(p.texto)}</td><td>${esc(p.seccion)}</td><td class="est-${e}">${ESTADOS[e] || "—"}</td></tr>`; }).join("")}</tbody>
+    </table>
+    <h4>Hallazgos (${hallazgos.length})</h4>
+    ${hallazgos.length ? hallazgos.map(p => { const r = q.respuestas[p.n]; return `<div class="inf-hall">
+      <div class="tx"><b>${p.n}. ${esc(p.texto)}</b><div style="color:#555;font-size:8.5pt">${esc(p.seccion)}</div>
+      <div style="margin-top:4px;white-space:pre-wrap">${esc(r.obs)}</div></div>
+      ${r.foto ? `<img src="${r.foto}" alt="Foto del punto ${p.n}">` : ""}</div>`; }).join("") : "<p>Sin hallazgos: todos los puntos aplicables están conformes.</p>"}
+    ${hallazgos.length ? `<h4>Plan de acciones correctivas</h4>
+    <table>
+      <thead><tr><th class="c" style="width:34px;white-space:nowrap">N.°</th><th>Hallazgo</th><th>Acción correctiva</th><th>Responsable</th><th>Fecha límite</th></tr></thead>
+      <tbody>${hallazgos.map(p => { const r = q.respuestas[p.n]; return `<tr><td class="c">${p.n}</td><td>${esc(p.texto)}</td><td style="white-space:pre-wrap">${r.accion ? esc(r.accion) : porDefinir}</td><td>${r.responsable ? esc(r.responsable) : porDefinir}</td><td style="white-space:nowrap">${r.limite ? esc(r.limite) : porDefinir}</td></tr>`; }).join("")}</tbody>
+    </table>` : ""}
+    <div class="inf-firma"><div class="raya"></div><b>${esc(q.inspector)}</b><br>Inspector de SST</div>
+    <div class="inf-pie">Comercial Los Andes S.A.C. · Inspección mensual de seguridad y salud en el trabajo · Almacén</div>
+  </div>`;
+}
+function imprimir(q) {
+  $("#informe").innerHTML = htmlInforme(q);
+  const previo = document.title;
+  document.title = `Inspeccion_Almacen_${q.fecha.replace(/\//g, "-")}`;
+  const restaurar = () => { document.title = previo; window.removeEventListener("afterprint", restaurar); };
+  window.addEventListener("afterprint", restaurar);
+  // Esperar a que carguen las fotos antes de abrir el diálogo de impresión
+  const imgs = [...document.querySelectorAll("#informe img")];
+  Promise.all(imgs.map(i => i.complete ? 0 : new Promise(r => { i.onload = i.onerror = r; }))).then(() => setTimeout(() => window.print(), 50));
+}
+
+/* =====================================================================
+   Historial y comparación mes a mes
+   ===================================================================== */
+function pintarHistorial() {
+  const lista = DB.inspecciones.slice().sort((a, b) => ordenFecha(b.fecha) - ordenFecha(a.fecha));
+  const completas = lista.filter(q => q.completa).reverse(); // de la más antigua a la más reciente
+  const ultimas = completas.slice(-12);
+
+  $("#grafico").innerHTML = !ultimas.length
+    ? '<p class="vacio">Aún no hay inspecciones completas para comparar.</p>'
+    : `<div class="grafico">${ultimas.map(q => {
+        const d = leerFecha(q.fecha);
+        return `<div class="fila"><span>${MESES[d.getMonth()].slice(0, 3)} ${d.getFullYear()}<br><small style="color:var(--suave)">${esc(q.fecha)}</small></span>
+          <div class="pista"><i style="width:${Math.max(0, q.pct)}%;background:var(--${color(q.pct) === "nd" ? "suave" : color(q.pct)})"></i><span class="m75" style="left:75%"></span><span class="m90" style="left:90%"></span></div>
+          <span class="val">${pctTxt(q.pct)}</span></div>`;
+      }).join("")}</div>
+      <div class="leyenda"><span>Líneas punteadas: 75 % y 90 %</span><span><span class="sem verde" style="padding:0 8px">≥ 90</span></span><span><span class="sem ambar" style="padding:0 8px">75–89</span></span><span><span class="sem rojo" style="padding:0 8px">&lt; 75</span></span></div>`;
+
+  const dif = (a, b) => {
+    if (a == null || b == null) return "";
+    const d = Math.round((a - b) * 10) / 10;
+    return d > 0 ? `<span class="dif sube">▲ ${d} pts</span>` : d < 0 ? `<span class="dif baja">▼ ${Math.abs(d)} pts</span>` : '<span class="dif igual">= igual</span>';
+  };
+  $("#comparacion").innerHTML = !ultimas.length ? '<p class="vacio">Aún no hay inspecciones completas para comparar.</p>' : `<table>
+    <thead><tr><th>Fecha</th><th class="c">General</th>${SECCIONES.map(s => `<th class="c">${esc(SEC_CORTA[s])}</th>`).join("")}<th class="c">Hallazgos</th></tr></thead>
+    <tbody>${ultimas.slice().reverse().map((q, i, arr) => {
+      const prev = arr[i + 1];
+      const s = porSeccion(q.respuestas), sp = prev ? porSeccion(prev.respuestas) : null;
+      const g = calcular(q.respuestas);
+      return `<tr><td style="white-space:nowrap">${esc(q.fecha)}</td><td class="c">${sem(q.pct)}${prev ? dif(q.pct, prev.pct) : ""}</td>
+        ${s.map((x, j) => `<td class="c">${sem(x.pct)}${sp ? dif(x.pct, sp[j].pct) : ""}</td>`).join("")}
+        <td class="c">${g.nc}</td></tr>`;
+    }).join("")}</tbody></table>
+    <p class="ayuda">Cada fila se compara con la inspección anterior (▲ mejora, ▼ empeora, en puntos porcentuales).</p>`;
+
+  $("#lista-hist").innerHTML = !lista.length ? '<p class="vacio">Todavía no hay inspecciones guardadas.</p>' : lista.map(q => {
+    const g = calcular(q.respuestas);
+    return `<div class="hist-item" data-id="${q.id}">
+      <div><div class="t">${esc(q.fecha)} · ${esc(q.area)}</div>
+        <div class="s">Inspector: ${esc(q.inspector)} · ${q.completa ? `${g.nc} hallazgo${g.nc === 1 ? "" : "s"}` : `Incompleta: ${g.respondidos} de 20 respondidos`}</div></div>
+      <div>${q.completa ? sem(q.pct) : '<span class="sem nd">Incompleta</span>'}</div>
+      <div class="acciones">
+        <button class="btn chico" data-acc="abrir">Abrir</button>
+        ${q.completa ? '<button class="btn chico" data-acc="informe">Imprimir / Guardar PDF</button>' : ""}
+        <button class="btn chico peligro" data-acc="eliminar">Eliminar</button>
+      </div></div>`;
+  }).join("");
+}
+$("#lista-hist").addEventListener("click", async e => {
+  const b = e.target.closest("[data-acc]");
+  if (!b) return;
+  const q = DB.inspecciones.find(x => x.id === b.closest("[data-id]").dataset.id);
+  if (b.dataset.acc === "informe") return imprimir(q);
+  if (b.dataset.acc === "eliminar") {
+    const ok = await confirmar({ titulo: "¿Eliminar esta inspección?", mensaje: `Se borrará la inspección del ${q.fecha} (${q.area}), con sus hallazgos y fotos. Esta acción no se puede deshacer.`, si: "Sí, eliminar" });
+    if (!ok) return;
+    DB.inspecciones = DB.inspecciones.filter(x => x !== q);
+    if (ed.id === q.id) { ed.id = null; ed.sucio = true; DB.borrador = ed; pintarEstado(); }
+    guardarDB();
+    pintarHistorial();
+    return aviso("Inspección eliminada.");
+  }
+  if (!(await descartarSiHayCambios())) return;
+  const r = {};
+  Object.entries(q.respuestas).forEach(([n, x]) => { r[n] = { estado: x.estado, obs: x.obs || "", foto: x.foto || "", accion: x.accion || "", responsable: x.responsable || "", limite: x.limite || "" }; });
+  ed = { id: q.id, fecha: q.fecha, inspector: q.inspector, area: q.area, resp: r, sucio: false };
+  DB.borrador = ed;
+  guardarDB();
+  cargarEditor();
+  mostrarVista("inspeccion");
+  aviso(`Abriste la inspección del ${q.fecha}.`);
+});
+
+/* =====================================================================
+   Copia de seguridad
+   ===================================================================== */
+function pintarRespaldo() {
+  const n = DB.inspecciones.length;
+  const fotos = DB.inspecciones.reduce((a, q) => a + Object.values(q.respuestas).filter(r => r.foto).length, 0);
+  $("#resumen-datos").textContent = n ? `Hay ${n} ${n === 1 ? "inspección guardada" : "inspecciones guardadas"} con ${fotos} foto${fotos === 1 ? "" : "s"}.` : "Aún no hay inspecciones guardadas.";
+  const usado = bytesUsados(), limite = 5 * 1024 * 1024;
+  const pct = Math.min(100, usado / limite * 100);
+  $("#medidor").style.width = pct + "%";
+  $("#medidor").style.background = pct >= 80 ? "var(--rojo)" : pct >= 60 ? "var(--ambar)" : "var(--navy)";
+  $("#espacio").textContent = `${(usado / 1024 / 1024).toFixed(2)} MB usados de unos 5 MB disponibles (${Math.round(pct)} %).` +
+    (pct >= 80 ? " Queda poco espacio: descarga una copia y elimina inspecciones antiguas." : "");
+}
+$("#btn-descargar").addEventListener("click", () => {
+  const datos = { app: "inspeccion-almacen-losandes", version: 1, exportado: new Date().toISOString(), inspecciones: DB.inspecciones, inspector: DB.inspector };
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(datos)], { type: "application/json" }));
+  a.download = `Copia_Inspeccion_Almacen_${hoy().replace(/\//g, "-")}.json`;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  aviso("Copia de seguridad descargada.");
+});
+$("#btn-cargar").addEventListener("click", () => { $("#err-archivo").textContent = ""; $("#archivo").click(); });
+$("#archivo").addEventListener("change", e => {
+  const f = e.target.files[0];
+  e.target.value = "";
+  if (!f) return;
+  const lector = new FileReader();
+  lector.onload = async () => {
+    let d = null;
+    try { d = JSON.parse(lector.result); } catch (err) { /* no es JSON */ }
+    const valido = d && d.app === "inspeccion-almacen-losandes" && Array.isArray(d.inspecciones) &&
+      d.inspecciones.every(q => q && q.id && leerFecha(q.fecha) && q.respuestas && typeof q.respuestas === "object");
+    if (!valido) {
+      $("#err-archivo").textContent = `El archivo “${f.name}” no es una copia de seguridad de esta app. Elige el .json que descargaste con “Descargar copia de seguridad”.`;
+      return;
+    }
+    const ok = await confirmar({ titulo: "¿Reemplazar los datos actuales?", mensaje: `Se borrarán las ${DB.inspecciones.length} inspección(es) de este navegador y se cargarán las ${d.inspecciones.length} de la copia “${f.name}”.`, si: "Sí, reemplazar" });
+    if (!ok) return;
+    const anterior = DB.inspecciones;
+    DB.inspecciones = d.inspecciones;
+    if (d.inspector && !DB.inspector) DB.inspector = d.inspector;
+    if (ed.id && !DB.inspecciones.some(q => q.id === ed.id)) { ed.id = null; DB.borrador = ed; }
+    if (!guardarDB()) { DB.inspecciones = anterior; return; }
+    pintarRespaldo();
+    pintarEstado();
+    aviso(`Copia cargada: ${d.inspecciones.length} inspección(es).`);
+  };
+  lector.onerror = () => { $("#err-archivo").textContent = "No se pudo leer el archivo. Intenta de nuevo."; };
+  lector.readAsText(f);
+});
+
+/* =====================================================================
+   Pestañas e inicio
+   ===================================================================== */
+function mostrarVista(v) {
+  document.querySelectorAll(".tab").forEach(t => t.setAttribute("aria-selected", String(t.dataset.vista === v)));
+  ["inspeccion", "historial", "respaldo"].forEach(x => { $("#vista-" + x).hidden = x !== v; });
+  $("#resumen").hidden = v !== "inspeccion";
+  if (v === "historial") pintarHistorial();
+  if (v === "respaldo") pintarRespaldo();
+  window.scrollTo({ top: 0 });
+}
+document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => mostrarVista(t.dataset.vista)));
+
+cargarDB();
+if (!almacenOK) $("#banner-almacen").hidden = false;
+ed = DB.borrador && DB.borrador.resp ? DB.borrador : editorVacio();
+cargarEditor();
+</script>
+</body>
+</html>
