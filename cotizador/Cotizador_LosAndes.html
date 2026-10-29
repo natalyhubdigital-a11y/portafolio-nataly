@@ -1,0 +1,1165 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cotizador Los Andes</title>
+<style>
+  :root {
+    --navy: #1f3a5f;
+    --navy-dark: #162b47;
+    --naranja: #d97757;
+    --fondo: #f3f5f8;
+    --tarjeta: #ffffff;
+    --texto: #1c2430;
+    --suave: #5b6675;
+    --borde: #cfd6df;
+    --linea: #e4e8ee;
+    --error: #b42318;
+    --error-fondo: #fdecea;
+    --ok: #1d6b3a;
+    --aviso: #8a5a00;
+    --aviso-fondo: #fff4dc;
+  }
+  * { box-sizing: border-box; }
+  html { font-size: 18px; -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--fondo);
+    color: var(--texto);
+    font-family: "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
+    line-height: 1.45;
+  }
+  button, input, textarea, select { font: inherit; color: inherit; }
+  [hidden] { display: none !important; }
+
+  /* ---------- Cabecera ---------- */
+  .top {
+    background: var(--navy);
+    color: #fff;
+    position: sticky; top: 0; z-index: 20;
+    box-shadow: 0 2px 6px rgba(0,0,0,.15);
+  }
+  .top-in {
+    max-width: 1100px; margin: 0 auto; padding: 10px 16px;
+    display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+  }
+  .marca { display: flex; align-items: center; gap: 12px; margin-right: auto; }
+  .marca svg { width: 44px; height: 44px; flex: none; }
+  .marca b { display: block; font-size: 1.15rem; line-height: 1.1; }
+  .marca span { font-size: .8rem; opacity: .85; }
+  .tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+  .tab {
+    background: transparent; border: 2px solid rgba(255,255,255,.35); color: #fff;
+    padding: 8px 16px; border-radius: 999px; cursor: pointer; font-weight: 600; min-height: 44px;
+  }
+  .tab:hover { border-color: #fff; }
+  .tab[aria-selected="true"] { background: #fff; color: var(--navy); border-color: #fff; }
+
+  main { max-width: 1100px; margin: 0 auto; padding: 20px 16px 120px; }
+  h1 { font-size: 1.5rem; margin: 0 0 4px; color: var(--navy); }
+  h2 { font-size: 1.2rem; margin: 0 0 14px; color: var(--navy); }
+  .sub { color: var(--suave); margin: 0 0 18px; }
+
+  .card {
+    background: var(--tarjeta); border: 1px solid var(--linea); border-radius: 12px;
+    padding: 20px; margin-bottom: 18px;
+  }
+  .estado {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    background: #e9eef5; border-radius: 10px; padding: 12px 16px; margin-bottom: 18px;
+  }
+  .estado .num { font-size: 1.3rem; font-weight: 700; color: var(--navy); letter-spacing: .02em; }
+  .estado .info { color: var(--suave); font-size: .9rem; }
+
+  /* ---------- Formularios ---------- */
+  .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px 18px; }
+  .grid .full { grid-column: 1 / -1; }
+  .campo label { display: block; font-weight: 600; margin-bottom: 4px; font-size: .95rem; }
+  .campo .opc { font-weight: 400; color: var(--suave); font-size: .85rem; }
+  input[type="text"], input[type="email"], input[type="tel"], input[type="search"], textarea {
+    width: 100%; padding: 10px 12px; border: 1.5px solid var(--borde); border-radius: 8px;
+    background: #fff; min-height: 48px;
+  }
+  textarea { min-height: 80px; resize: vertical; }
+  input:focus, textarea:focus, button:focus-visible {
+    outline: 3px solid rgba(31,58,95,.35); outline-offset: 1px; border-color: var(--navy);
+  }
+  .invalido { border-color: var(--error) !important; background: var(--error-fondo) !important; }
+  .error { color: var(--error); font-size: .9rem; font-weight: 600; margin-top: 4px; min-height: 0; }
+  .error:empty { display: none; }
+  .ayuda { color: var(--suave); font-size: .85rem; margin-top: 4px; }
+
+  /* ---------- Botones ---------- */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    min-height: 48px; padding: 10px 20px; border-radius: 10px; border: 2px solid var(--navy);
+    background: #fff; color: var(--navy); font-weight: 700; cursor: pointer; text-align: center;
+  }
+  .btn:hover { background: #eef2f7; }
+  .btn.primario { background: var(--navy); color: #fff; }
+  .btn.primario:hover { background: var(--navy-dark); }
+  .btn.peligro { border-color: var(--error); color: var(--error); }
+  .btn.peligro:hover { background: var(--error-fondo); }
+  .btn.peligro.lleno { background: var(--error); color: #fff; }
+  .btn.chico { min-height: 40px; padding: 6px 12px; font-size: .9rem; border-width: 1.5px; }
+  .acciones { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+
+  /* ---------- Buscador de productos ---------- */
+  .buscador { position: relative; z-index: 18; }
+  .resultados {
+    position: absolute; left: 0; right: 0; top: 100%; z-index: 10; margin: 4px 0 0; padding: 4px;
+    list-style: none; background: #fff; border: 1.5px solid var(--navy); border-radius: 10px;
+    max-height: min(340px, 50vh); overflow-y: auto; box-shadow: 0 8px 24px rgba(0,0,0,.15);
+  }
+  .resultados li {
+    display: grid; grid-template-columns: 64px 1fr auto; gap: 10px; align-items: center;
+    padding: 10px 12px; border-radius: 8px; cursor: pointer;
+  }
+  .resultados li.activo, .resultados li:hover { background: #e9eef5; }
+  .resultados .cod { font-weight: 700; color: var(--navy); }
+  .resultados .uni { color: var(--suave); font-size: .85rem; }
+  .resultados .pre { font-weight: 600; white-space: nowrap; }
+  .resultados .vacio { display: block; cursor: default; color: var(--suave); }
+  .resultados .vacio:hover { background: none; }
+
+  /* ---------- Líneas de productos ---------- */
+  .lineas { margin-top: 16px; }
+  .fila {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 120px 110px 100px 140px 96px;
+    gap: 10px; align-items: start; padding: 12px 0; border-bottom: 1px solid var(--linea);
+  }
+  .fila.cab { font-weight: 700; color: var(--suave); font-size: .85rem; padding: 6px 0; border-bottom: 2px solid var(--linea); }
+  .fila .num-col { text-align: right; }
+  .fila .cel-precio, .fila .cel-imp { padding-top: 11px; text-align: right; white-space: nowrap; }
+  .fila .cel-imp { font-weight: 700; }
+  .fila .cel-prod { padding-top: 6px; }
+  .fila .cel-prod b { color: var(--navy); margin-right: 6px; }
+  .fila .cel-prod .uni { color: var(--suave); font-size: .85rem; }
+  .fila input { text-align: right; padding: 8px 10px; }
+  .fila .lbl { display: none; }
+  .fila .cel-aut {
+    grid-column: 1 / -1; background: var(--aviso-fondo); border-radius: 8px; padding: 10px 12px;
+  }
+  .fila .cel-aut label { font-weight: 600; display: block; margin-bottom: 4px; color: var(--aviso); }
+  .fila .cel-aut input { text-align: left; max-width: 420px; }
+  .vacio-lineas { color: var(--suave); padding: 20px 0 6px; text-align: center; }
+
+  .totales { margin-left: auto; max-width: 380px; margin-top: 16px; }
+  .totales div { display: flex; justify-content: space-between; padding: 6px 0; font-size: 1.05rem; }
+  .totales .total { border-top: 2px solid var(--navy); margin-top: 6px; padding-top: 10px; font-size: 1.35rem; font-weight: 800; color: var(--navy); }
+
+  .barra-final {
+    position: sticky; bottom: 0; z-index: 15; background: rgba(243,245,248,.96);
+    border-top: 1px solid var(--linea); margin: 0 -16px; padding: 12px 16px;
+  }
+  .barra-final .acciones { max-width: 1100px; margin: 0 auto; }
+  .aviso-general { color: var(--error); font-weight: 700; }
+
+  /* ---------- Historial ---------- */
+  .hist-fila {
+    display: grid; grid-template-columns: 150px 110px minmax(0,1fr) 140px auto;
+    gap: 12px; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--linea);
+  }
+  .hist-fila.cab { font-weight: 700; color: var(--suave); font-size: .85rem; border-bottom-width: 2px; padding: 6px 0; }
+  .hist-fila .n { font-weight: 700; color: var(--navy); }
+  .hist-fila .cli b { display: block; }
+  .hist-fila .cli span { color: var(--suave); font-size: .85rem; }
+  .hist-fila .tot { text-align: right; font-weight: 700; white-space: nowrap; }
+  .hist-fila .acciones { gap: 6px; justify-content: flex-end; }
+
+  /* ---------- Modal y avisos ---------- */
+  .velo {
+    position: fixed; inset: 0; background: rgba(15,25,40,.55); z-index: 50;
+    display: flex; align-items: center; justify-content: center; padding: 16px;
+  }
+  .modal {
+    background: #fff; border-radius: 14px; padding: 24px; max-width: 480px; width: 100%;
+    box-shadow: 0 20px 50px rgba(0,0,0,.3);
+  }
+  .modal h3 { margin: 0 0 8px; font-size: 1.25rem; color: var(--navy); }
+  .modal p { margin: 0 0 20px; }
+  .modal .acciones { justify-content: flex-end; }
+  .toast {
+    position: fixed; left: 50%; bottom: 96px; transform: translateX(-50%); z-index: 60;
+    background: var(--texto); color: #fff; padding: 12px 20px; border-radius: 10px;
+    max-width: calc(100% - 32px); box-shadow: 0 8px 24px rgba(0,0,0,.25); font-weight: 600;
+  }
+  .banner { background: var(--error-fondo); color: var(--error); padding: 12px 16px; border-radius: 10px; margin-bottom: 16px; font-weight: 600; }
+
+  /* ---------- Celular ---------- */
+  @media (max-width: 760px) {
+    html { font-size: 17px; }
+    .grid { grid-template-columns: 1fr; }
+    .marca { width: 100%; }
+    .tabs { width: 100%; }
+    .tab { flex: 1; padding: 8px 8px; font-size: .9rem; }
+    .card { padding: 16px; }
+    .fila.cab, .hist-fila.cab { display: none; }
+    .fila { grid-template-columns: 1fr 1fr; gap: 8px 12px; }
+    .fila .cel-prod { grid-column: 1 / -1; padding-top: 0; }
+    .fila .lbl { display: block; font-size: .8rem; color: var(--suave); font-weight: 600; margin-bottom: 2px; text-align: left; }
+    .fila .cel-precio, .fila .cel-imp { padding-top: 0; text-align: left; }
+    .fila input { text-align: left; }
+    .fila .cel-del { align-self: end; }
+    .fila .cel-del .btn { width: 100%; }
+    .hist-fila { grid-template-columns: 1fr auto; gap: 4px 12px; }
+    .hist-fila .cli { grid-column: 1 / -1; }
+    .hist-fila .acciones { grid-column: 1 / -1; justify-content: flex-start; margin-top: 6px; }
+    .top { position: static; }
+    .barra-final { padding: 8px 16px; }
+    .barra-final .acciones { gap: 6px; flex-wrap: nowrap; }
+    .barra-final .btn { flex: 1 1 0; padding: 6px 6px; font-size: .85rem; line-height: 1.2; border-radius: 8px; }
+    .aviso-general { position: absolute; bottom: 100%; left: 16px; right: 16px; background: var(--error-fondo); padding: 6px 10px; border-radius: 8px; font-size: .9rem; }
+    .aviso-general:empty { display: none; }
+    .totales { max-width: none; }
+  }
+
+  /* ---------- Documento para imprimir ---------- */
+  #impresion { display: none; }
+  @media print {
+    @page { size: A4; margin: 14mm 14mm 16mm; }
+    html { font-size: 11pt; }
+    body { background: #fff; }
+    .app, .velo, .toast { display: none !important; }
+    #impresion { display: block; color: #111; }
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+  .doc { font-size: 10.5pt; line-height: 1.4; }
+  .doc-cab { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; padding-bottom: 12px; border-bottom: 3px solid var(--navy); }
+  .doc-marca { display: flex; align-items: center; gap: 12px; }
+  .doc-marca svg { width: 64px; height: 64px; }
+  .doc-marca .nom { font-size: 22pt; font-weight: 800; color: var(--navy); line-height: 1; }
+  .doc-marca .raz { color: #555; font-size: 11pt; margin-top: 4px; }
+  .doc-caja { border: 2px solid var(--navy); border-radius: 8px; text-align: center; padding: 8px 16px; min-width: 200px; }
+  .doc-caja .t { font-weight: 800; color: var(--navy); letter-spacing: .12em; font-size: 12pt; }
+  .doc-caja .n { font-weight: 800; font-size: 14pt; margin: 2px 0 4px; }
+  .doc-caja div { font-size: 10pt; }
+  .doc h4 { font-size: 10pt; text-transform: uppercase; letter-spacing: .08em; color: var(--navy); margin: 18px 0 6px; }
+  .doc-cli { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 24px; background: #f1f4f8; padding: 10px 14px; border-radius: 6px; }
+  .doc-cli .full { grid-column: 1 / -1; }
+  .doc-cli span { color: #555; }
+  .doc table { width: 100%; border-collapse: collapse; margin-top: 4px; }
+  .doc th { background: var(--navy); color: #fff; font-weight: 700; font-size: 9.5pt; padding: 6px 6px; text-align: left; }
+  .doc td { padding: 6px; border-bottom: 1px solid #d9dee5; vertical-align: top; font-size: 10pt; }
+  .doc tr { page-break-inside: avoid; }
+  .doc .r { text-align: right; white-space: nowrap; }
+  .doc .c { text-align: center; }
+  .doc .aut { display: block; font-size: 8.5pt; color: #8a5a00; font-style: italic; margin-top: 2px; }
+  .doc-tot { margin-left: auto; width: 260px; margin-top: 10px; }
+  .doc-tot div { display: flex; justify-content: space-between; padding: 3px 0; }
+  .doc-tot .total { border-top: 2px solid var(--navy); margin-top: 4px; padding-top: 6px; font-weight: 800; font-size: 12.5pt; color: var(--navy); }
+  .doc-cond ol { margin: 0; padding-left: 20px; }
+  .doc-cond li { margin-bottom: 2px; }
+  .doc-firma { margin-top: 56px; width: 280px; text-align: center; page-break-inside: avoid; }
+  .doc-firma .raya { border-top: 1.5px solid #111; margin-bottom: 6px; }
+  .doc-firma b { display: block; }
+  .doc-firma span { display: block; color: #444; font-size: 9.5pt; }
+  .doc-pie { margin-top: 24px; font-size: 8.5pt; color: #777; text-align: center; }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header class="top">
+    <div class="top-in">
+      <div class="marca">
+        <svg viewBox="0 0 120 120" aria-hidden="true"><rect width="120" height="120" rx="18" fill="#1f3a5f" stroke="rgba(255,255,255,.35)" stroke-width="3"/><polygon points="60,30 25,100 95,100" fill="#d97757"/><polygon points="75,55 50,100 100,100" fill="#fff"/></svg>
+        <div><b>Cotizador Los Andes</b><span>Comercial Los Andes S.A.C.</span></div>
+      </div>
+      <nav class="tabs" role="tablist">
+        <button class="tab" role="tab" data-vista="cotizacion" aria-selected="true">Cotización</button>
+        <button class="tab" role="tab" data-vista="historial" aria-selected="false">Historial</button>
+        <button class="tab" role="tab" data-vista="respaldo" aria-selected="false">Copia de seguridad</button>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <div id="banner-almacen" class="banner" hidden>
+      Este navegador no permite guardar datos (modo privado o bloqueado). Puedes trabajar, pero al cerrar se perderá todo. Usa “Descargar copia de seguridad” antes de salir.
+    </div>
+
+    <!-- ================= COTIZACIÓN ================= -->
+    <section id="vista-cotizacion">
+      <div class="estado">
+        <span class="num" id="estado-num">Nueva cotización</span>
+        <span class="info" id="estado-info"></span>
+      </div>
+
+      <div class="card">
+        <h2>Datos del cliente</h2>
+        <div class="grid">
+          <div class="campo full">
+            <label for="razon">Razón social</label>
+            <input type="text" id="razon" autocomplete="organization">
+            <div class="error" id="err-razon"></div>
+          </div>
+          <div class="campo">
+            <label for="ruc">RUC</label>
+            <input type="text" id="ruc" inputmode="numeric" maxlength="11" placeholder="11 dígitos">
+            <div class="error" id="err-ruc"></div>
+          </div>
+          <div class="campo">
+            <label for="fecha">Fecha</label>
+            <input type="text" id="fecha" inputmode="numeric" placeholder="dd/mm/aaaa" maxlength="10">
+            <div class="error" id="err-fecha"></div>
+          </div>
+          <div class="campo">
+            <label for="contacto">Contacto <span class="opc">(persona que atiende)</span></label>
+            <input type="text" id="contacto" autocomplete="name">
+            <div class="error" id="err-contacto"></div>
+          </div>
+          <div class="campo">
+            <label for="telefono">Teléfono</label>
+            <input type="tel" id="telefono" placeholder="Ej. 987 654 321">
+            <div class="error" id="err-telefono"></div>
+          </div>
+          <div class="campo full">
+            <label for="correo">Correo</label>
+            <input type="email" id="correo" placeholder="nombre@empresa.com">
+            <div class="error" id="err-correo"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Productos</h2>
+        <div class="campo buscador">
+          <label for="buscar">Buscar por código o descripción</label>
+          <input type="search" id="buscar" placeholder="Ej. P015 o silla" autocomplete="off"
+                 role="combobox" aria-expanded="false" aria-controls="resultados">
+          <ul class="resultados" id="resultados" role="listbox" hidden></ul>
+          <div class="ayuda">Escribe y elige con un clic (o con las flechas y Enter). Los precios vienen del catálogo y no se pueden cambiar.</div>
+          <div class="error" id="err-items"></div>
+        </div>
+
+        <div class="lineas" id="lineas"></div>
+
+        <div class="totales">
+          <div><span>Subtotal</span><span id="t-sub">S/ 0.00</span></div>
+          <div><span>IGV (18 %)</span><span id="t-igv">S/ 0.00</span></div>
+          <div class="total"><span>Total</span><span id="t-total">S/ 0.00</span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Observaciones <span class="opc" style="font-weight:400;font-size:.85rem;color:var(--suave)">(opcional, sale en la cotización)</span></h2>
+        <textarea id="obs" aria-label="Observaciones"></textarea>
+      </div>
+
+      <div class="card">
+        <h2>Vendedor (para la firma)</h2>
+        <p class="sub" style="margin-top:-8px">Se recuerda automáticamente para las próximas cotizaciones.</p>
+        <div class="grid">
+          <div class="campo">
+            <label for="vnombre">Nombre completo</label>
+            <input type="text" id="vnombre" autocomplete="name">
+            <div class="error" id="err-vnombre"></div>
+          </div>
+          <div class="campo">
+            <label for="vcargo">Cargo <span class="opc">(opcional)</span></label>
+            <input type="text" id="vcargo" placeholder="Ej. Asesor comercial">
+            <div class="error" id="err-vcargo"></div>
+          </div>
+          <div class="campo">
+            <label for="vtelefono">Teléfono <span class="opc">(opcional)</span></label>
+            <input type="tel" id="vtelefono">
+            <div class="error" id="err-vtelefono"></div>
+          </div>
+          <div class="campo">
+            <label for="vcorreo">Correo <span class="opc">(opcional)</span></label>
+            <input type="email" id="vcorreo">
+            <div class="error" id="err-vcorreo"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="barra-final">
+        <div class="acciones">
+          <button class="btn primario" id="btn-guardar">Guardar cotización</button>
+          <button class="btn primario" id="btn-imprimir">Imprimir / Guardar PDF</button>
+          <button class="btn" id="btn-nueva">Nueva cotización</button>
+          <span class="aviso-general" id="aviso-general"></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= HISTORIAL ================= -->
+    <section id="vista-historial" hidden>
+      <h1>Historial de cotizaciones</h1>
+      <p class="sub">Busca, abre, imprime, duplica o elimina cotizaciones guardadas.</p>
+      <div class="card">
+        <div class="campo">
+          <label for="hist-buscar">Buscar</label>
+          <input type="search" id="hist-buscar" placeholder="Número, cliente, RUC, contacto o producto">
+        </div>
+        <div id="hist-lista" style="margin-top:12px"></div>
+      </div>
+    </section>
+
+    <!-- ================= RESPALDO ================= -->
+    <section id="vista-respaldo" hidden>
+      <h1>Copia de seguridad</h1>
+      <p class="sub">Tus datos se guardan solos en este navegador. Descarga una copia de vez en cuando (por ejemplo, cada viernes) para no perder nada si cambias de equipo o se borra el navegador.</p>
+      <div class="card">
+        <h2>Descargar copia de seguridad</h2>
+        <p id="resumen-datos" style="margin-top:0"></p>
+        <button class="btn primario" id="btn-descargar">Descargar copia de seguridad</button>
+      </div>
+      <div class="card">
+        <h2>Cargar copia de seguridad</h2>
+        <p style="margin-top:0">Reemplaza los datos de este navegador por los de un archivo de copia (.json) descargado antes.</p>
+        <button class="btn" id="btn-cargar">Cargar copia de seguridad</button>
+        <input type="file" id="archivo" accept=".json,application/json" hidden>
+        <div class="error" id="err-archivo"></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div id="impresion"></div>
+
+<script>
+"use strict";
+
+/* =====================================================================
+   Datos fijos
+   ===================================================================== */
+const CATALOGO = [
+  ["P001","Resma papel bond A4 80 g","Útiles de oficina","paquete",18.5],
+  ["P002","Archivador de palanca lomo ancho","Útiles de oficina","unidad",9.9],
+  ["P003","Caja de lapiceros azul (50)","Útiles de oficina","caja",22],
+  ["P004","Cuaderno empastado A4","Útiles de oficina","unidad",12.5],
+  ["P005","Folder manila A4 (100)","Útiles de oficina","paquete",28],
+  ["P006","Grapas 26/6 (5000)","Útiles de oficina","caja",6.5],
+  ["P007","Engrapador metálico","Útiles de oficina","unidad",24],
+  ["P008","Perforador de 2 huecos","Útiles de oficina","unidad",19],
+  ["P009","Tarjetas de presentación","Útiles de oficina","millar",85],
+  ["P010","Post-it 3x3 (12 blocks)","Útiles de oficina","paquete",32],
+  ["P011","Escritorio ejecutivo 1.60 m","Mobiliario","unidad",1450],
+  ["P012","Escritorio modular 1.20 m","Mobiliario","unidad",720],
+  ["P013","Silla de visita tapizada","Mobiliario","unidad",245],
+  ["P014","Mesa de reuniones 8 personas","Mobiliario","unidad",2300],
+  ["P015","Silla ergonómica giratoria","Mobiliario","unidad",320],
+  ["P016","Estante metálico de 5 niveles","Mobiliario","unidad",380],
+  ["P017","Archivador metálico de 4 gavetas","Mobiliario","unidad",640],
+  ["P018","Locker metálico de 6 puertas","Mobiliario","unidad",890],
+  ["P019","Pizarra acrílica 1.20 x 0.90 m","Mobiliario","unidad",290],
+  ["P020","Laptop 14\" Core i5 16 GB","Equipos","unidad",3250],
+  ["P021","Monitor LED 24\" Full HD","Equipos","unidad",650],
+  ["P022","Impresora multifuncional láser","Equipos","unidad",890],
+  ["P023","Proyector multimedia 3500 lúmenes","Equipos","unidad",2100],
+  ["P024","Kit teclado y mouse inalámbrico","Equipos","unidad",120],
+  ["P025","Disco externo 1 TB","Equipos","unidad",280],
+  ["P026","Tóner para impresora láser","Equipos","unidad",260],
+  ["P027","Router inalámbrico doble banda","Equipos","unidad",230],
+  ["P028","Estabilizador 1000 VA","Equipos","unidad",180],
+  ["P029","Cámara web Full HD","Equipos","unidad",210],
+  ["P030","Audífonos con micrófono","Equipos","unidad",95]
+].map(([codigo, descripcion, categoria, unidad, precio]) => ({ codigo, descripcion, categoria, unidad, precio }));
+
+const CONDICIONES = [
+  "Validez de la cotización: 15 días calendario.",
+  "Precios expresados en soles (S/), incluido el IGV.",
+  "Entrega en 5 días hábiles en Lima Metropolitana.",
+  "Forma de pago: al contado, o crédito sujeto a evaluación.",
+  "Garantía según las condiciones del fabricante."
+];
+const DIAS_VALIDEZ = 15;
+const IGV = 0.18;
+const DESC_MAX_SIN_AUTORIZACION = 15;
+const CLAVE = "cotizador_losandes_v1";
+const LOGO_SVG = '<svg viewBox="0 0 120 120" aria-hidden="true"><rect width="120" height="120" rx="18" fill="#1f3a5f"/><polygon points="60,30 25,100 95,100" fill="#d97757"/><polygon points="75,55 50,100 100,100" fill="#fff"/></svg>';
+
+/* =====================================================================
+   Utilidades
+   ===================================================================== */
+const $ = s => document.querySelector(s);
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const r2 = x => Math.round((x + Number.EPSILON) * 100) / 100;
+const pad = n => String(n).padStart(2, "0");
+const norm = s => String(s).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+
+function dinero(n) {
+  const neg = n < 0;
+  const [ent, dec] = Math.abs(r2(n)).toFixed(2).split(".");
+  return (neg ? "-" : "") + "S/ " + ent.replace(/\B(?=(\d{3})+(?!\d))/g, ",") + "." + dec;
+}
+function numero(n) { // cantidades y porcentajes: separador de miles, decimales solo si los tiene
+  const s = String(r2(n)).split(".");
+  return s[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",") + (s[1] ? "." + s[1] : "");
+}
+const fmtFecha = d => pad(d.getDate()) + "/" + pad(d.getMonth() + 1) + "/" + d.getFullYear();
+const hoy = () => fmtFecha(new Date());
+function leerFecha(s) {
+  const m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(String(s).trim());
+  if (!m) return null;
+  const d = new Date(+m[3], +m[2] - 1, +m[1]);
+  if (d.getDate() !== +m[1] || d.getMonth() !== +m[2] - 1 || +m[3] < 2000) return null;
+  return d;
+}
+function sumarDias(fechaTxt, dias) {
+  const d = leerFecha(fechaTxt);
+  if (!d) return "";
+  d.setDate(d.getDate() + dias);
+  return fmtFecha(d);
+}
+
+/* =====================================================================
+   Almacenamiento
+   ===================================================================== */
+let DB = { cotizaciones: [], contadores: {}, vendedor: { nombre: "", cargo: "", telefono: "", correo: "" }, borrador: null };
+let almacenOK = true;
+
+function cargarDB() {
+  try {
+    const raw = localStorage.getItem(CLAVE);
+    if (raw) {
+      const d = JSON.parse(raw);
+      DB = Object.assign(DB, d);
+      DB.vendedor = Object.assign({ nombre: "", cargo: "", telefono: "", correo: "" }, d.vendedor || {});
+    }
+    localStorage.setItem(CLAVE + "_prueba", "1");
+    localStorage.removeItem(CLAVE + "_prueba");
+  } catch (e) {
+    almacenOK = false;
+  }
+}
+function guardarDB() {
+  try {
+    localStorage.setItem(CLAVE, JSON.stringify(DB));
+  } catch (e) {
+    almacenOK = false;
+    $("#banner-almacen").hidden = false;
+  }
+}
+
+/* =====================================================================
+   Avisos: toast y confirmación
+   ===================================================================== */
+let toastTimer;
+function aviso(msg) {
+  let t = $(".toast");
+  if (!t) { t = document.createElement("div"); t.className = "toast"; t.setAttribute("role", "status"); document.body.appendChild(t); }
+  t.textContent = msg;
+  t.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.hidden = true; }, 3200);
+}
+function confirmar({ titulo, mensaje, si = "Sí, borrar", no = "Cancelar", peligro = true }) {
+  return new Promise(resolve => {
+    const velo = document.createElement("div");
+    velo.className = "velo";
+    velo.innerHTML = `<div class="modal" role="alertdialog" aria-modal="true" aria-labelledby="m-t" aria-describedby="m-m">
+      <h3 id="m-t">${esc(titulo)}</h3><p id="m-m">${esc(mensaje)}</p>
+      <div class="acciones"><button class="btn" data-r="0">${esc(no)}</button>
+      <button class="btn ${peligro ? "peligro lleno" : "primario"}" data-r="1">${esc(si)}</button></div></div>`;
+    const previo = document.activeElement;
+    const cerrar = r => { velo.remove(); document.removeEventListener("keydown", tecla); if (previo) previo.focus(); resolve(r); };
+    const tecla = e => { if (e.key === "Escape") cerrar(false); };
+    velo.addEventListener("click", e => {
+      if (e.target === velo) cerrar(false);
+      const b = e.target.closest("[data-r]");
+      if (b) cerrar(b.dataset.r === "1");
+    });
+    document.addEventListener("keydown", tecla);
+    document.body.appendChild(velo);
+    velo.querySelector('[data-r="0"]').focus();
+  });
+}
+
+/* =====================================================================
+   Validaciones
+   ===================================================================== */
+const reCorreo = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+function errTelefono(v) {
+  if (!v.trim()) return "";
+  if (!/^[\d\s+()-]+$/.test(v)) return "El teléfono solo puede tener números (ej. 987 654 321).";
+  const dig = v.replace(/\D/g, "").length;
+  if (dig < 6 || dig > 15) return "El teléfono debe tener entre 6 y 15 números.";
+  return "";
+}
+const REGLAS = {
+  razon: v => v.trim() ? "" : "Escribe la razón social del cliente.",
+  ruc: v => !v ? "Escribe el RUC del cliente (11 dígitos)."
+    : /\D/.test(v) ? "El RUC solo puede tener números."
+    : v.length !== 11 ? `El RUC debe tener 11 dígitos (ahora tiene ${v.length}).` : "",
+  fecha: v => leerFecha(v) ? "" : "Escribe una fecha válida con el formato dd/mm/aaaa (ej. " + hoy() + ").",
+  contacto: () => "",
+  telefono: errTelefono,
+  correo: v => !v.trim() || reCorreo.test(v.trim()) ? "" : "El correo no parece válido. Ejemplo: nombre@empresa.com",
+  vnombre: v => v.trim() ? "" : "Escribe tu nombre: aparece en la firma de la cotización.",
+  vcargo: () => "",
+  vtelefono: errTelefono,
+  vcorreo: v => !v.trim() || reCorreo.test(v.trim()) ? "" : "El correo no parece válido. Ejemplo: nombre@losandes.pe"
+};
+function ponerError(input, errEl, msg) {
+  input.classList.toggle("invalido", !!msg);
+  input.setAttribute("aria-invalid", msg ? "true" : "false");
+  errEl.textContent = msg || "";
+}
+function validarCampo(id) {
+  const el = $("#" + id);
+  const msg = REGLAS[id](el.value);
+  ponerError(el, $("#err-" + id), msg);
+  return !msg;
+}
+function errCantidad(v) {
+  const s = String(v).trim();
+  if (!s) return "Escribe la cantidad.";
+  if (!/^\d+$/.test(s)) return "La cantidad debe ser un número entero (sin decimales).";
+  if (+s < 1) return "La cantidad debe ser 1 o más.";
+  return "";
+}
+function errDescuento(v) {
+  const s = String(v).trim().replace(",", ".");
+  if (!s) return "";
+  if (!/^\d+(\.\d{1,2})?$/.test(s)) return "Escribe el descuento como número (ej. 10 o 12.5).";
+  if (+s > 100) return "El descuento no puede ser mayor a 100 %.";
+  return "";
+}
+const valorDesc = v => { const s = String(v).trim().replace(",", "."); return s && !errDescuento(s) ? +s : 0; };
+const valorCant = v => errCantidad(v) ? 0 : +String(v).trim();
+const necesitaAutorizacion = it => valorDesc(it.descuento) > DESC_MAX_SIN_AUTORIZACION;
+const errAutoriza = it => necesitaAutorizacion(it) && !String(it.autoriza || "").trim()
+  ? `El descuento pasa del ${DESC_MAX_SIN_AUTORIZACION} %: escribe el nombre de quien lo autoriza.` : "";
+
+/* =====================================================================
+   Cálculos
+   ===================================================================== */
+const importeLinea = it => r2(valorCant(it.cantidad) * it.precio * (1 - valorDesc(it.descuento) / 100));
+function totales(items) {
+  const subtotal = r2(items.reduce((a, it) => a + importeLinea(it), 0));
+  const igv = r2(subtotal * IGV);
+  return { subtotal, igv, total: r2(subtotal + igv) };
+}
+
+/* =====================================================================
+   Editor de cotización
+   ===================================================================== */
+const CAMPOS_CLI = ["razon", "ruc", "contacto", "correo", "telefono"];
+const CAMPOS_VEND = { vnombre: "nombre", vcargo: "cargo", vtelefono: "telefono", vcorreo: "correo" };
+let ed;
+
+function editorVacio() {
+  return { id: null, numero: null, fecha: hoy(), cliente: { razon: "", ruc: "", contacto: "", correo: "", telefono: "" }, items: [], obs: "", sucio: false };
+}
+
+function cargarEditorEnPantalla() {
+  CAMPOS_CLI.forEach(k => { $("#" + k).value = ed.cliente[k] || ""; });
+  $("#fecha").value = ed.fecha;
+  $("#obs").value = ed.obs || "";
+  Object.entries(CAMPOS_VEND).forEach(([id, k]) => { $("#" + id).value = DB.vendedor[k] || ""; });
+  document.querySelectorAll(".campo .error").forEach(e => { e.textContent = ""; });
+  document.querySelectorAll(".invalido").forEach(e => e.classList.remove("invalido"));
+  $("#aviso-general").textContent = "";
+  pintarLineas();
+  pintarEstado();
+}
+
+function pintarEstado() {
+  const n = $("#estado-num"), i = $("#estado-info");
+  if (ed.numero) {
+    n.textContent = ed.numero;
+    i.textContent = ed.sucio ? "Tiene cambios sin guardar (el borrador está a salvo en este navegador)." : "Guardada en el historial.";
+  } else {
+    n.textContent = "Nueva cotización";
+    i.textContent = "El número (" + siguienteNumero(anioDe(ed.fecha), false) + ") se asigna al guardar. El borrador se guarda solo.";
+  }
+}
+
+function guardarBorrador() {
+  DB.borrador = ed;
+  guardarDB();
+}
+function marcarCambio() {
+  ed.sucio = true;
+  guardarBorrador();
+  pintarEstado();
+  $("#aviso-general").textContent = "";
+}
+
+function pintarLineas() {
+  const cont = $("#lineas");
+  if (!ed.items.length) {
+    cont.innerHTML = '<div class="vacio-lineas">Aún no hay productos. Búscalos arriba para agregarlos.</div>';
+    pintarTotales();
+    return;
+  }
+  let h = `<div class="fila cab"><div>Producto</div><div class="num-col">P. unit.</div><div class="num-col">Cantidad</div><div class="num-col">Desc. %</div><div class="num-col">Importe</div><div></div></div>`;
+  ed.items.forEach(it => {
+    const aut = necesitaAutorizacion(it);
+    h += `<div class="fila" data-uid="${it.uid}">
+      <div class="cel-prod"><b>${esc(it.codigo)}</b>${esc(it.descripcion)} <span class="uni">· ${esc(it.unidad)}</span></div>
+      <div class="cel-precio"><span class="lbl">P. unit. (sin IGV)</span>${dinero(it.precio)}</div>
+      <div class="cel-cant"><label class="lbl" for="c-${it.uid}">Cantidad</label>
+        <input type="text" inputmode="numeric" id="c-${it.uid}" data-k="cantidad" value="${esc(it.cantidad)}" aria-label="Cantidad de ${esc(it.descripcion)}">
+        <div class="error"></div></div>
+      <div class="cel-desc"><label class="lbl" for="d-${it.uid}">Desc. %</label>
+        <input type="text" inputmode="decimal" id="d-${it.uid}" data-k="descuento" value="${esc(it.descuento)}" aria-label="Descuento % de ${esc(it.descripcion)}">
+        <div class="error"></div></div>
+      <div class="cel-imp"><span class="lbl">Importe</span><span class="imp">${dinero(importeLinea(it))}</span></div>
+      <div class="cel-del"><button class="btn peligro chico" data-quitar="${it.uid}">Quitar</button></div>
+      <div class="cel-aut" ${aut ? "" : "hidden"}>
+        <label for="a-${it.uid}">Descuento mayor al ${DESC_MAX_SIN_AUTORIZACION} %: ¿quién lo autoriza?</label>
+        <input type="text" id="a-${it.uid}" data-k="autoriza" value="${esc(it.autoriza || "")}" placeholder="Nombre de quien autoriza">
+        <div class="error"></div></div>
+    </div>`;
+  });
+  cont.innerHTML = h;
+  pintarTotales();
+}
+
+function pintarTotales() {
+  const t = totales(ed.items);
+  $("#t-sub").textContent = dinero(t.subtotal);
+  $("#t-igv").textContent = dinero(t.igv);
+  $("#t-total").textContent = dinero(t.total);
+}
+
+function validarLinea(fila, it) {
+  const ok = [];
+  const pares = [["cantidad", errCantidad(it.cantidad)], ["descuento", errDescuento(it.descuento)], ["autoriza", errAutoriza(it)]];
+  pares.forEach(([k, msg]) => {
+    const inp = fila.querySelector(`[data-k="${k}"]`);
+    ponerError(inp, inp.nextElementSibling, msg);
+    ok.push(!msg);
+  });
+  return ok.every(Boolean);
+}
+
+// Escribir en cantidad / descuento / autoriza
+$("#lineas").addEventListener("input", e => {
+  const inp = e.target.closest("[data-k]");
+  if (!inp) return;
+  const fila = inp.closest(".fila");
+  const it = ed.items.find(x => x.uid === fila.dataset.uid);
+  const k = inp.dataset.k;
+  if (k === "cantidad") inp.value = inp.value.replace(/[^\d]/g, "");
+  it[k] = inp.value;
+  fila.querySelector(".imp").textContent = dinero(importeLinea(it));
+  const caja = fila.querySelector(".cel-aut");
+  caja.hidden = !necesitaAutorizacion(it);
+  // errores en vivo, salvo "falta autorizador" que se muestra al salir del campo o al guardar
+  const errC = errCantidad(it.cantidad), errD = errDescuento(it.descuento);
+  const iC = fila.querySelector('[data-k="cantidad"]'), iD = fila.querySelector('[data-k="descuento"]'), iA = fila.querySelector('[data-k="autoriza"]');
+  ponerError(iC, iC.nextElementSibling, errC);
+  ponerError(iD, iD.nextElementSibling, errD);
+  if (!errAutoriza(it) || k === "autoriza") ponerError(iA, iA.nextElementSibling, k === "autoriza" ? errAutoriza(it) : "");
+  pintarTotales();
+  marcarCambio();
+});
+$("#lineas").addEventListener("focusout", e => {
+  const inp = e.target.closest('[data-k="descuento"]');
+  if (!inp) return;
+  const fila = inp.closest(".fila");
+  const it = ed.items.find(x => x.uid === fila.dataset.uid);
+  if (errAutoriza(it)) {
+    const iA = fila.querySelector('[data-k="autoriza"]');
+    ponerError(iA, iA.nextElementSibling, errAutoriza(it));
+  }
+});
+$("#lineas").addEventListener("click", async e => {
+  const b = e.target.closest("[data-quitar]");
+  if (!b) return;
+  const it = ed.items.find(x => x.uid === b.dataset.quitar);
+  const ok = await confirmar({ titulo: "¿Quitar este producto?", mensaje: `Se quitará “${it.codigo} · ${it.descripcion}” de la cotización.`, si: "Sí, quitar" });
+  if (!ok) return;
+  ed.items = ed.items.filter(x => x !== it);
+  pintarLineas();
+  marcarCambio();
+  aviso("Producto quitado.");
+});
+
+// Campos del cliente y vendedor
+CAMPOS_CLI.forEach(k => {
+  const el = $("#" + k);
+  el.addEventListener("input", () => {
+    if (k === "ruc") el.value = el.value.replace(/\D/g, "").slice(0, 11);
+    ed.cliente[k] = el.value;
+    if (el.classList.contains("invalido")) validarCampo(k);
+    marcarCambio();
+  });
+  el.addEventListener("blur", () => { if (el.value) validarCampo(k); });
+});
+$("#fecha").addEventListener("input", e => {
+  const el = e.target;
+  el.value = el.value.replace(/[^\d/]/g, "");
+  ed.fecha = el.value;
+  if (el.classList.contains("invalido")) validarCampo("fecha");
+  marcarCambio();
+});
+$("#fecha").addEventListener("blur", () => validarCampo("fecha"));
+$("#obs").addEventListener("input", e => { ed.obs = e.target.value; marcarCambio(); });
+Object.entries(CAMPOS_VEND).forEach(([id, k]) => {
+  const el = $("#" + id);
+  el.addEventListener("input", () => {
+    DB.vendedor[k] = el.value;
+    if (el.classList.contains("invalido")) validarCampo(id);
+    guardarDB();
+  });
+  el.addEventListener("blur", () => { if (el.value) validarCampo(id); });
+});
+
+/* ---------- Buscador de productos ---------- */
+const inBuscar = $("#buscar"), lista = $("#resultados");
+let resultados = [], activo = 0;
+
+function buscar() {
+  const terms = norm(inBuscar.value).split(/\s+/).filter(Boolean);
+  resultados = CATALOGO.filter(p => {
+    const h = norm(p.codigo + " " + p.descripcion + " " + p.categoria);
+    return terms.every(t => h.includes(t));
+  });
+  activo = 0;
+  pintarResultados();
+}
+function pintarResultados() {
+  if (!resultados.length) {
+    lista.innerHTML = `<li class="vacio">No hay productos con “${esc(inBuscar.value)}”. Prueba con otra palabra o con el código (ej. P015).</li>`;
+  } else {
+    lista.innerHTML = resultados.map((p, i) =>
+      `<li role="option" data-codigo="${p.codigo}" class="${i === activo ? "activo" : ""}" aria-selected="${i === activo}">
+        <span class="cod">${p.codigo}</span>
+        <span>${esc(p.descripcion)}<br><span class="uni">${esc(p.categoria)} · ${esc(p.unidad)}</span></span>
+        <span class="pre">${dinero(p.precio)}</span></li>`).join("");
+  }
+  lista.hidden = false;
+  inBuscar.setAttribute("aria-expanded", "true");
+  const a = lista.querySelector(".activo");
+  if (a) a.scrollIntoView({ block: "nearest" });
+}
+function cerrarResultados() {
+  lista.hidden = true;
+  inBuscar.setAttribute("aria-expanded", "false");
+}
+function agregarProducto(codigo) {
+  const p = CATALOGO.find(x => x.codigo === codigo);
+  if (!p) return;
+  const ya = ed.items.find(x => x.codigo === codigo);
+  if (ya) {
+    ya.cantidad = String(valorCant(ya.cantidad) + 1);
+    aviso(`${p.codigo} ya estaba en la lista: ahora la cantidad es ${ya.cantidad}.`);
+  } else {
+    ed.items.push({ uid: uid(), codigo: p.codigo, descripcion: p.descripcion, unidad: p.unidad, precio: p.precio, cantidad: "1", descuento: "0", autoriza: "" });
+    aviso(`Agregado: ${p.descripcion}`);
+  }
+  $("#err-items").textContent = "";
+  inBuscar.classList.remove("invalido");
+  inBuscar.value = "";
+  cerrarResultados();
+  pintarLineas();
+  marcarCambio();
+  inBuscar.focus();
+}
+inBuscar.addEventListener("input", buscar);
+inBuscar.addEventListener("focus", buscar);
+inBuscar.addEventListener("keydown", e => {
+  if (lista.hidden && (e.key === "ArrowDown" || e.key === "Enter")) { buscar(); if (e.key === "ArrowDown") return e.preventDefault(); }
+  if (e.key === "ArrowDown") { e.preventDefault(); activo = Math.min(activo + 1, resultados.length - 1); pintarResultados(); }
+  else if (e.key === "ArrowUp") { e.preventDefault(); activo = Math.max(activo - 1, 0); pintarResultados(); }
+  else if (e.key === "Enter") { e.preventDefault(); if (resultados[activo]) agregarProducto(resultados[activo].codigo); }
+  else if (e.key === "Escape") { cerrarResultados(); }
+});
+inBuscar.addEventListener("blur", () => setTimeout(cerrarResultados, 150));
+lista.addEventListener("mousedown", e => {
+  e.preventDefault();
+  const li = e.target.closest("[data-codigo]");
+  if (li) agregarProducto(li.dataset.codigo);
+});
+
+/* ---------- Guardar ---------- */
+function validarTodo() {
+  let primero = null;
+  const marcar = el => { if (!primero) primero = el; };
+  [...CAMPOS_CLI, "fecha", ...Object.keys(CAMPOS_VEND)].forEach(id => { if (!validarCampo(id)) marcar($("#" + id)); });
+  if (!ed.items.length) {
+    $("#err-items").textContent = "Agrega al menos un producto a la cotización.";
+    inBuscar.classList.add("invalido");
+    marcar(inBuscar);
+  }
+  document.querySelectorAll("#lineas .fila[data-uid]").forEach(fila => {
+    const it = ed.items.find(x => x.uid === fila.dataset.uid);
+    if (!validarLinea(fila, it)) marcar(fila.querySelector(".invalido"));
+  });
+  if (primero) {
+    $("#aviso-general").textContent = "Revisa los campos marcados en rojo.";
+    primero.scrollIntoView({ block: "center", behavior: "smooth" });
+    setTimeout(() => primero.focus({ preventScroll: true }), 300);
+    return false;
+  }
+  return true;
+}
+
+const anioDe = fechaTxt => (leerFecha(fechaTxt) || new Date()).getFullYear();
+function siguienteNumero(anio, reservar) {
+  const usados = DB.cotizaciones.filter(q => q.numero.startsWith(`COT-${anio}-`)).map(q => parseInt(q.numero.slice(9), 10) || 0);
+  const n = Math.max(DB.contadores[anio] || 0, ...usados, 0) + 1;
+  if (reservar) DB.contadores[anio] = n;
+  return `COT-${anio}-${String(n).padStart(4, "0")}`;
+}
+
+function guardarCotizacion() {
+  if (!validarTodo()) return null;
+  const items = ed.items.map(it => {
+    const d = valorDesc(it.descuento);
+    return {
+      codigo: it.codigo, descripcion: it.descripcion, unidad: it.unidad, precio: it.precio,
+      cantidad: valorCant(it.cantidad), descuento: d,
+      autoriza: d > DESC_MAX_SIN_AUTORIZACION ? String(it.autoriza).trim() : "",
+      importe: importeLinea(it)
+    };
+  });
+  const t = totales(ed.items);
+  const cliente = {};
+  CAMPOS_CLI.forEach(k => { cliente[k] = String(ed.cliente[k] || "").trim(); });
+  const ahora = new Date().toISOString();
+  const previa = ed.id ? DB.cotizaciones.find(q => q.id === ed.id) : null;
+  const q = {
+    id: previa ? previa.id : uid(),
+    numero: previa ? previa.numero : siguienteNumero(anioDe(ed.fecha), true),
+    fecha: ed.fecha.trim(),
+    cliente, items, obs: ed.obs.trim(),
+    subtotal: t.subtotal, igv: t.igv, total: t.total,
+    vendedor: { ...DB.vendedor },
+    condiciones: previa ? previa.condiciones : CONDICIONES.slice(),
+    creada: previa ? previa.creada : ahora,
+    modificada: ahora
+  };
+  if (previa) DB.cotizaciones[DB.cotizaciones.indexOf(previa)] = q;
+  else DB.cotizaciones.push(q);
+  ed.id = q.id;
+  ed.numero = q.numero;
+  ed.sucio = false;
+  guardarBorrador();
+  pintarEstado();
+  pintarHistorial();
+  return { q, nueva: !previa };
+}
+
+$("#btn-guardar").addEventListener("click", () => {
+  const r = guardarCotizacion();
+  if (r) aviso(r.nueva ? `Cotización ${r.q.numero} guardada.` : `Cambios guardados en ${r.q.numero}.`);
+});
+$("#btn-imprimir").addEventListener("click", () => {
+  const r = guardarCotizacion();
+  if (r) imprimir(r.q);
+});
+
+async function descartarSiHayCambios(accion) {
+  const tieneAlgo = ed.items.length || CAMPOS_CLI.some(k => String(ed.cliente[k] || "").trim()) || ed.obs.trim();
+  if (!ed.sucio || !tieneAlgo) return true;
+  return confirmar({
+    titulo: "Hay cambios sin guardar",
+    mensaje: `La cotización en pantalla tiene cambios que no se guardaron. Si continúas (${accion}), se borrarán.`,
+    si: "Sí, descartar cambios"
+  });
+}
+$("#btn-nueva").addEventListener("click", async () => {
+  if (!(await descartarSiHayCambios("nueva cotización"))) return;
+  ed = editorVacio();
+  guardarBorrador();
+  cargarEditorEnPantalla();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+  $("#razon").focus();
+});
+
+/* =====================================================================
+   Impresión
+   ===================================================================== */
+function htmlDocumento(q) {
+  const c = q.cliente, v = q.vendedor || {};
+  const filas = q.items.map((it, i) => `<tr>
+      <td class="c">${i + 1}</td><td>${esc(it.codigo)}</td>
+      <td>${esc(it.descripcion)}${it.autoriza ? `<span class="aut">Descuento de ${numero(it.descuento)} % autorizado por: ${esc(it.autoriza)}</span>` : ""}</td>
+      <td>${esc(it.unidad)}</td><td class="r">${numero(it.cantidad)}</td><td class="r">${dinero(it.precio)}</td>
+      <td class="r">${it.descuento ? numero(it.descuento) + " %" : "—"}</td><td class="r">${dinero(it.importe)}</td></tr>`).join("");
+  const contactoV = [v.telefono, v.correo].filter(Boolean).map(esc).join(" · ");
+  return `<div class="doc">
+    <div class="doc-cab">
+      <div class="doc-marca">${LOGO_SVG}<div><div class="nom">Los Andes</div><div class="raz">Comercial Los Andes S.A.C.</div></div></div>
+      <div class="doc-caja"><div class="t">COTIZACIÓN</div><div class="n">${esc(q.numero)}</div>
+        <div>Fecha: ${esc(q.fecha)}</div><div>Válida hasta: ${esc(sumarDias(q.fecha, DIAS_VALIDEZ))}</div></div>
+    </div>
+    <h4>Cliente</h4>
+    <div class="doc-cli">
+      <div class="full"><span>Razón social:</span> <b>${esc(c.razon)}</b></div>
+      <div><span>RUC:</span> ${esc(c.ruc)}</div>
+      <div><span>Contacto:</span> ${esc(c.contacto) || "—"}</div>
+      <div><span>Correo:</span> ${esc(c.correo) || "—"}</div>
+      <div><span>Teléfono:</span> ${esc(c.telefono) || "—"}</div>
+    </div>
+    <h4>Detalle</h4>
+    <table>
+      <thead><tr><th class="c">N.°</th><th>Código</th><th>Descripción</th><th>Unidad</th><th class="r">Cant.</th><th class="r">P. unit.</th><th class="r">Desc.</th><th class="r">Importe</th></tr></thead>
+      <tbody>${filas}</tbody>
+    </table>
+    <div class="doc-tot">
+      <div><span>Subtotal</span><span>${dinero(q.subtotal)}</span></div>
+      <div><span>IGV (18 %)</span><span>${dinero(q.igv)}</span></div>
+      <div class="total"><span>Total</span><span>${dinero(q.total)}</span></div>
+    </div>
+    ${q.obs ? `<h4>Observaciones</h4><div style="white-space:pre-wrap">${esc(q.obs)}</div>` : ""}
+    <div class="doc-cond"><h4>Condiciones comerciales</h4><ol>${(q.condiciones || CONDICIONES).map(x => `<li>${esc(x)}</li>`).join("")}</ol></div>
+    <div class="doc-firma"><div class="raya"></div><b>${esc(v.nombre)}</b>${v.cargo ? `<span>${esc(v.cargo)}</span>` : ""}<span>Comercial Los Andes S.A.C.</span>${contactoV ? `<span>${contactoV}</span>` : ""}</div>
+    <div class="doc-pie">P. unit. e importes sin IGV. El total incluye IGV (18 %).</div>
+  </div>`;
+}
+function imprimir(q) {
+  $("#impresion").innerHTML = htmlDocumento(q);
+  const tituloPrevio = document.title;
+  document.title = `${q.numero} - ${q.cliente.razon}`; // nombre sugerido del PDF
+  const restaurar = () => { document.title = tituloPrevio; window.removeEventListener("afterprint", restaurar); };
+  window.addEventListener("afterprint", restaurar);
+  setTimeout(() => window.print(), 50);
+}
+
+/* =====================================================================
+   Historial
+   ===================================================================== */
+function pintarHistorial() {
+  const cont = $("#hist-lista");
+  const terms = norm($("#hist-buscar").value).split(/\s+/).filter(Boolean);
+  const lista = DB.cotizaciones.slice().sort((a, b) => b.numero.localeCompare(a.numero)).filter(q => {
+    const h = norm([q.numero, q.fecha, q.cliente.razon, q.cliente.ruc, q.cliente.contacto, q.cliente.correo, ...q.items.map(i => i.codigo + " " + i.descripcion)].join(" "));
+    return terms.every(t => h.includes(t));
+  });
+  if (!DB.cotizaciones.length) {
+    cont.innerHTML = '<p class="vacio-lineas">Todavía no hay cotizaciones guardadas.</p>';
+    return;
+  }
+  if (!lista.length) {
+    cont.innerHTML = `<p class="vacio-lineas">Ninguna cotización coincide con “${esc($("#hist-buscar").value)}”.</p>`;
+    return;
+  }
+  cont.innerHTML = `<div class="hist-fila cab"><div>Número</div><div>Fecha</div><div>Cliente</div><div style="text-align:right">Total</div><div></div></div>` +
+    lista.map(q => `<div class="hist-fila" data-id="${q.id}">
+      <div class="n">${esc(q.numero)}</div>
+      <div>${esc(q.fecha)}</div>
+      <div class="cli"><b>${esc(q.cliente.razon)}</b><span>RUC ${esc(q.cliente.ruc)}${q.cliente.contacto ? " · " + esc(q.cliente.contacto) : ""} · ${q.items.length} producto${q.items.length === 1 ? "" : "s"}</span></div>
+      <div class="tot">${dinero(q.total)}</div>
+      <div class="acciones">
+        <button class="btn chico" data-acc="abrir">Abrir</button>
+        <button class="btn chico" data-acc="imprimir">Imprimir</button>
+        <button class="btn chico" data-acc="duplicar">Duplicar</button>
+        <button class="btn chico peligro" data-acc="eliminar">Eliminar</button>
+      </div></div>`).join("");
+}
+$("#hist-buscar").addEventListener("input", pintarHistorial);
+$("#hist-lista").addEventListener("click", async e => {
+  const b = e.target.closest("[data-acc]");
+  if (!b) return;
+  const q = DB.cotizaciones.find(x => x.id === b.closest("[data-id]").dataset.id);
+  const acc = b.dataset.acc;
+  const aEditor = it => ({ uid: uid(), codigo: it.codigo, descripcion: it.descripcion, unidad: it.unidad, precio: it.precio, cantidad: String(it.cantidad), descuento: String(it.descuento), autoriza: it.autoriza || "" });
+
+  if (acc === "imprimir") return imprimir(q);
+  if (acc === "eliminar") {
+    const ok = await confirmar({ titulo: `¿Eliminar ${q.numero}?`, mensaje: `Se borrará la cotización de “${q.cliente.razon}” por ${dinero(q.total)}. Esta acción no se puede deshacer.`, si: "Sí, eliminar" });
+    if (!ok) return;
+    DB.cotizaciones = DB.cotizaciones.filter(x => x !== q);
+    if (ed.id === q.id) { ed.id = null; ed.numero = null; ed.sucio = true; }
+    guardarBorrador();
+    pintarHistorial();
+    pintarEstado();
+    return aviso(`${q.numero} eliminada.`);
+  }
+  if (!(await descartarSiHayCambios(acc === "abrir" ? "abrir otra cotización" : "duplicar"))) return;
+  if (acc === "abrir") {
+    ed = { id: q.id, numero: q.numero, fecha: q.fecha, cliente: { ...q.cliente }, items: q.items.map(aEditor), obs: q.obs || "", sucio: false };
+    aviso(`Abriste ${q.numero}. Puedes editarla y guardar.`);
+  } else {
+    // Copia como cotización nueva: fecha de hoy y precios vigentes del catálogo
+    let cambiaron = 0;
+    const items = q.items.map(it => {
+      const nuevo = aEditor(it);
+      const p = CATALOGO.find(x => x.codigo === it.codigo);
+      if (p && p.precio !== it.precio) { nuevo.precio = p.precio; cambiaron++; }
+      return nuevo;
+    });
+    ed = { id: null, numero: null, fecha: hoy(), cliente: { ...q.cliente }, items, obs: q.obs || "", sucio: true };
+    aviso(`Copia de ${q.numero} lista. Revísala y guarda para darle número nuevo.` + (cambiaron ? ` (${cambiaron} precio(s) actualizados al catálogo)` : ""));
+  }
+  guardarBorrador();
+  cargarEditorEnPantalla();
+  mostrarVista("cotizacion");
+  window.scrollTo({ top: 0 });
+});
+
+/* =====================================================================
+   Copia de seguridad
+   ===================================================================== */
+function pintarResumen() {
+  const n = DB.cotizaciones.length;
+  $("#resumen-datos").textContent = n
+    ? `Tienes ${n} cotización${n === 1 ? "" : "es"} guardada${n === 1 ? "" : "s"} en este navegador.`
+    : "Aún no tienes cotizaciones guardadas.";
+}
+$("#btn-descargar").addEventListener("click", () => {
+  const datos = { app: "cotizador-losandes", version: 1, exportado: new Date().toISOString(), cotizaciones: DB.cotizaciones, contadores: DB.contadores, vendedor: DB.vendedor };
+  const blob = new Blob([JSON.stringify(datos, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `Copia_Cotizador_LosAndes_${hoy().replace(/\//g, "-")}.json`;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  aviso("Copia de seguridad descargada.");
+});
+$("#btn-cargar").addEventListener("click", () => { $("#err-archivo").textContent = ""; $("#archivo").click(); });
+$("#archivo").addEventListener("change", e => {
+  const f = e.target.files[0];
+  e.target.value = "";
+  if (!f) return;
+  const lector = new FileReader();
+  lector.onload = async () => {
+    let d;
+    try { d = JSON.parse(lector.result); } catch (err) { d = null; }
+    const valido = d && d.app === "cotizador-losandes" && Array.isArray(d.cotizaciones) &&
+      d.cotizaciones.every(q => q && typeof q.numero === "string" && q.cliente && Array.isArray(q.items));
+    if (!valido) {
+      $("#err-archivo").textContent = `El archivo “${f.name}” no es una copia de seguridad de este cotizador. Elige el archivo .json que descargaste con “Descargar copia de seguridad”.`;
+      return;
+    }
+    const ok = await confirmar({
+      titulo: "¿Reemplazar los datos actuales?",
+      mensaje: `Se borrarán las ${DB.cotizaciones.length} cotización(es) de este navegador y se cargarán las ${d.cotizaciones.length} de la copia “${f.name}”.`,
+      si: "Sí, reemplazar"
+    });
+    if (!ok) return;
+    DB.cotizaciones = d.cotizaciones;
+    DB.contadores = d.contadores || {};
+    if (d.vendedor) DB.vendedor = Object.assign({ nombre: "", cargo: "", telefono: "", correo: "" }, d.vendedor);
+    if (ed.id && !DB.cotizaciones.some(q => q.id === ed.id)) { ed.id = null; ed.numero = null; }
+    guardarBorrador();
+    cargarEditorEnPantalla();
+    pintarHistorial();
+    pintarResumen();
+    aviso(`Copia cargada: ${d.cotizaciones.length} cotización(es).`);
+  };
+  lector.onerror = () => { $("#err-archivo").textContent = "No se pudo leer el archivo. Intenta de nuevo."; };
+  lector.readAsText(f);
+});
+
+/* =====================================================================
+   Pestañas e inicio
+   ===================================================================== */
+function mostrarVista(v) {
+  document.querySelectorAll(".tab").forEach(t => t.setAttribute("aria-selected", String(t.dataset.vista === v)));
+  ["cotizacion", "historial", "respaldo"].forEach(x => { $("#vista-" + x).hidden = x !== v; });
+  if (v === "historial") pintarHistorial();
+  if (v === "respaldo") pintarResumen();
+}
+document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => { mostrarVista(t.dataset.vista); window.scrollTo({ top: 0 }); }));
+
+cargarDB();
+if (!almacenOK) $("#banner-almacen").hidden = false;
+ed = DB.borrador && Array.isArray(DB.borrador.items) ? DB.borrador : editorVacio();
+cargarEditorEnPantalla();
+pintarHistorial();
+</script>
+</body>
+</html>
