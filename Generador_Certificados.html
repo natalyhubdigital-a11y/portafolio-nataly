@@ -1,0 +1,1254 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Generador de Certificados — Comercial Los Andes (demo)</title>
+<style>
+  :root {
+    --azul: #1f3a5f;
+    --azul-osc: #152a46;
+    --naranja: #d97757;
+    --fondo: #f4f6f9;
+    --tarjeta: #ffffff;
+    --texto: #1d2733;
+    --suave: #5b6878;
+    --borde: #d5dbe3;
+    --ok: #1e7a46;
+    --ok-fondo: #e3f4ea;
+    --mal: #b3261e;
+    --mal-fondo: #fbe9e7;
+    --radio: 12px;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--fondo);
+    color: var(--texto);
+    font: 18px/1.5 "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+  button, input, select, textarea { font: inherit; color: inherit; }
+  h1, h2, h3 { line-height: 1.25; margin: 0; }
+  .contenedor { max-width: 1120px; margin: 0 auto; padding: 0 16px; }
+
+  /* Cabecera */
+  .cabecera { background: var(--tarjeta); border-bottom: 1px solid var(--borde); }
+  .cabecera .contenedor { display: flex; align-items: center; gap: 16px; padding-top: 14px; padding-bottom: 14px; flex-wrap: wrap; }
+  .cabecera img { height: 52px; width: auto; }
+  .cabecera h1 { font-size: 1.45rem; color: var(--azul); }
+  .cabecera .sub { color: var(--suave); font-size: .95rem; }
+  .guardado { margin-left: auto; font-size: .9rem; color: var(--suave); text-align: right; }
+  .guardado.error { color: var(--mal); font-weight: 600; }
+
+  /* Resumen */
+  .resumen { display: grid; grid-template-columns: repeat(3, 1fr) auto; gap: 12px; margin: 20px 0; align-items: stretch; }
+  .dato { background: var(--tarjeta); border: 1px solid var(--borde); border-radius: var(--radio); padding: 12px 16px; }
+  .dato .num { font-size: 2rem; font-weight: 700; line-height: 1.1; }
+  .dato .etq { color: var(--suave); font-size: .95rem; }
+  .dato.ok .num { color: var(--ok); }
+  .dato.mal .num { color: var(--mal); }
+  .resumen .accion { display: flex; flex-direction: column; justify-content: center; gap: 6px; }
+
+  /* Secciones */
+  section.tarjeta { background: var(--tarjeta); border: 1px solid var(--borde); border-radius: var(--radio); padding: 22px; margin-bottom: 20px; }
+  section.tarjeta > h2 { font-size: 1.3rem; color: var(--azul); display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+  .paso { display: inline-grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--azul); color: #fff; font-size: 1rem; flex: none; }
+  .ayuda { color: var(--suave); margin: 0 0 16px; }
+
+  /* Botones */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    min-height: 48px; padding: 10px 20px; border-radius: 10px; cursor: pointer;
+    border: 2px solid var(--azul); background: #fff; color: var(--azul); font-weight: 600;
+    text-align: center; line-height: 1.2;
+  }
+  .btn:hover { background: #eef2f7; }
+  .btn:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 3px solid var(--naranja); outline-offset: 2px; }
+  .btn.primario { background: var(--azul); color: #fff; }
+  .btn.primario:hover { background: var(--azul-osc); }
+  .btn.peligro { border-color: var(--mal); color: var(--mal); }
+  .btn.peligro:hover { background: var(--mal-fondo); }
+  .btn.peligro.lleno { background: var(--mal); color: #fff; }
+  .btn.chico { min-height: 40px; padding: 6px 12px; font-size: .9rem; border-width: 1.5px; }
+  .btn:disabled { opacity: .45; cursor: not-allowed; }
+  .botones { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+
+  /* Tabla */
+  .tabla-envoltura { overflow-x: auto; border: 1px solid var(--borde); border-radius: 10px; }
+  table { border-collapse: collapse; width: 100%; font-size: .95rem; }
+  th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--borde); vertical-align: middle; }
+  th { background: #eef2f7; color: var(--azul); font-weight: 700; white-space: nowrap; position: sticky; top: 0; }
+  tbody tr:last-child td { border-bottom: 0; }
+  tbody tr:nth-child(even) { background: #fafbfd; }
+  td.num, th.num { text-align: center; }
+  td.nombre { min-width: 190px; }
+  td.nombre > div:first-child { font-weight: 700; }
+  td.curso { min-width: 150px; }
+  td.acc .btn { padding: 6px 10px; }
+  td .sub { color: var(--suave); font-size: .85rem; }
+  td.cod { font-family: Consolas, "Courier New", monospace; white-space: nowrap; }
+  td.acc { white-space: nowrap; }
+  td.acc .btn + .btn { margin-left: 4px; }
+  .estado { display: inline-block; padding: 3px 10px; border-radius: 999px; font-weight: 700; font-size: .85rem; white-space: nowrap; }
+  .estado.ok { background: var(--ok-fondo); color: var(--ok); }
+  .estado.mal { background: var(--mal-fondo); color: var(--mal); }
+  .vacio { padding: 28px; text-align: center; color: var(--suave); }
+  .pie-tabla { margin-top: 12px; }
+
+  /* Formularios */
+  .rejilla { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px 18px; }
+  .rejilla .ancho { grid-column: 1 / -1; }
+  .campo label { display: block; font-weight: 600; margin-bottom: 4px; }
+  .campo .nota-campo { font-weight: 400; color: var(--suave); font-size: .9rem; }
+  .campo input, .campo select, .campo textarea {
+    width: 100%; min-height: 48px; padding: 10px 12px; border: 1.5px solid #aab4c1; border-radius: 8px; background: #fff;
+  }
+  .campo textarea { min-height: 140px; resize: vertical; line-height: 1.5; }
+  .campo.invalido input, .campo.invalido textarea, .campo.invalido select { border-color: var(--mal); background: #fffafa; }
+  .error { color: var(--mal); font-size: .92rem; font-weight: 600; margin-top: 4px; }
+  .error:empty { display: none; }
+  .error ul { margin: 4px 0 0; padding-left: 20px; }
+  .aviso { color: #8a5300; font-size: .92rem; margin-top: 4px; }
+  .aviso:empty { display: none; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
+  .chip { min-height: 40px; padding: 6px 12px; border-radius: 8px; border: 1.5px dashed var(--azul); background: #f5f8fc; color: var(--azul); font-family: Consolas, monospace; cursor: pointer; }
+  .chip:hover { background: #e7eef7; }
+  .imagenes { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px; margin-top: 18px; }
+  .imagen-caja { border: 1px solid var(--borde); border-radius: 10px; padding: 14px; }
+  .imagen-caja .muestra { height: 90px; display: grid; place-items: center; background: #fafbfd; border-radius: 8px; margin: 8px 0 10px; }
+  .imagen-caja .muestra img { max-height: 80px; max-width: 100%; }
+  input[type=file] { display: none; }
+  details.formato { margin-top: 10px; color: var(--suave); }
+  details.formato summary { cursor: pointer; color: var(--azul); font-weight: 600; }
+  code { background: #eef2f7; padding: 1px 6px; border-radius: 4px; font-size: .92em; }
+
+  /* Vista previa */
+  .previa-controles { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; margin-bottom: 14px; }
+  .previa-controles .campo { flex: 1 1 280px; }
+  .previa-marco { background: #e4e8ee; border-radius: 10px; padding: 14px; }
+  .previa-escala { position: relative; overflow: hidden; margin: 0 auto; box-shadow: 0 4px 18px rgba(20,40,70,.18); background: #fff; }
+  .previa-escala .cert { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+  .previa-info { color: var(--suave); margin-top: 8px; text-align: center; font-size: .95rem; }
+
+  /* ===== Certificado (tamaño real A4 horizontal) ===== */
+  .cert {
+    width: 297mm; height: 210mm; background: #fff; color: #1d2733; position: relative; overflow: hidden;
+    font-family: Georgia, "Times New Roman", serif;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  .cert-borde { position: absolute; inset: 9mm; border: 2.2mm solid var(--azul); }
+  .cert-borde::after { content: ""; position: absolute; inset: 2.2mm; border: .6mm solid var(--naranja); }
+  .cert-contenido {
+    position: absolute; inset: 17mm 22mm 15mm; display: flex; flex-direction: column; align-items: center; text-align: center;
+  }
+  .cert-logo { height: 25mm; width: auto; max-width: 110mm; object-fit: contain; }
+  .cert-titulo { font-size: 46px; letter-spacing: .32em; color: var(--azul); font-weight: 700; margin: 4mm 0 0 .32em; line-height: 1.1; white-space: nowrap; }
+  .cert-subrayado { width: 46mm; height: 1mm; background: var(--naranja); margin: 3mm 0 0; }
+  .cert-cuerpo { flex: 1 1 auto; min-height: 0; width: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 3mm 0; }
+  .cert-texto { margin: 0; font-size: 21px; line-height: 1.5; max-width: 232mm; }
+  .cert-texto strong { color: var(--azul-osc); }
+  .cert-nombre { width: 100%; max-width: 245mm; margin: 4mm 0; text-align: center; white-space: nowrap; }
+  .cert-nombre span {
+    display: inline-block; font-size: 44px; font-weight: 700; color: var(--azul); line-height: 1.25;
+    padding: 0 4mm 1.5mm; border-bottom: .5mm solid #9aa8b8;
+  }
+  .cert-nombre.envolver { white-space: normal; }
+  .cert-pie { width: 100%; display: grid; grid-template-columns: 1fr auto 1fr; align-items: end; gap: 8mm; }
+  .cert-firma { text-align: center; min-width: 75mm; }
+  .cert-firma img { height: 20mm; width: auto; max-width: 85mm; object-fit: contain; display: block; margin: 0 auto -2mm; }
+  .cert-firma .linea { border-top: .4mm solid #1d2733; margin: 0 auto 1.5mm; width: 75mm; }
+  .cert-firma .quien { font-size: 18px; font-weight: 700; line-height: 1.3; }
+  .cert-firma .cargo { font-size: 15px; color: #4a5664; line-height: 1.3; }
+  .cert-codigo { text-align: right; font-family: "Segoe UI", Arial, sans-serif; font-size: 12px; color: #4a5664; line-height: 1.4; }
+  .cert-codigo b { display: block; font-family: Consolas, "Courier New", monospace; font-size: 15px; color: #1d2733; letter-spacing: .04em; }
+
+  /* Área de impresión: fuera de pantalla, pero con medidas reales */
+  #areaImpresion { position: fixed; left: -40000px; top: 0; }
+
+  /* Diálogo de confirmación y avisos */
+  .velo { position: fixed; inset: 0; background: rgba(15,25,40,.55); display: none; align-items: center; justify-content: center; padding: 16px; z-index: 50; }
+  .velo.abierto { display: flex; }
+  .dialogo { background: #fff; border-radius: 14px; max-width: 520px; width: 100%; padding: 24px; box-shadow: 0 10px 40px rgba(0,0,0,.3); }
+  .dialogo h3 { font-size: 1.25rem; color: var(--azul); margin-bottom: 10px; }
+  .dialogo p { margin: 0 0 20px; white-space: pre-line; }
+  .dialogo .botones { justify-content: flex-end; }
+  .toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: var(--azul-osc); color: #fff; padding: 12px 20px; border-radius: 10px; font-weight: 600; z-index: 60; max-width: calc(100% - 32px); box-shadow: 0 6px 20px rgba(0,0,0,.25); display: none; }
+  .toast.visible { display: block; }
+
+  @media (max-width: 760px) {
+    body { font-size: 17px; }
+    .resumen { grid-template-columns: repeat(3, 1fr); }
+    .resumen .accion { grid-column: 1 / -1; }
+    .dato { padding: 10px; }
+    .dato .num { font-size: 1.6rem; }
+    .dato .etq { font-size: .85rem; }
+    section.tarjeta { padding: 16px; }
+    .cabecera img { height: 42px; }
+    .guardado { margin-left: 0; text-align: left; width: 100%; }
+    .botones .btn { flex: 1 1 auto; }
+    .previa-marco { padding: 8px; }
+
+    /* Tabla de control como tarjetas en el celular */
+    .tabla-envoltura { border: 0; overflow: visible; }
+    table thead { display: none; }
+    table, tbody { display: block; }
+    tbody tr { display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; border: 1px solid var(--borde); border-radius: 10px; padding: 12px; margin-bottom: 10px; background: #fff !important; }
+    tbody td { border: 0; padding: 0; text-align: left !important; }
+    td.n { grid-row: 1; color: var(--suave); font-weight: 700; }
+    td.nombre, td.curso { min-width: 0; }
+    td[data-etq] { grid-column: 1 / -1; display: flex; gap: 8px; align-items: baseline; }
+    td.curso { display: block; }
+    td[data-etq]::before { content: attr(data-etq) ":"; color: var(--suave); font-family: "Segoe UI", Roboto, Arial, sans-serif; font-size: .9rem; min-width: 64px; }
+    td.curso::before { display: none; }
+    td.acc { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+    td.acc .btn { flex: 1 1 0; }
+    td.acc .btn + .btn { margin-left: 0; }
+    td.vacio { grid-column: 1 / -1; }
+  }
+
+  @page { size: A4 landscape; margin: 0; }
+  @media print {
+    html, body { background: #fff; margin: 0; padding: 0; }
+    .app, .velo, .toast { display: none !important; }
+    #areaImpresion { position: static; left: auto; }
+    #areaImpresion .cert { break-after: page; page-break-after: always; height: 209.5mm; }
+    #areaImpresion .cert:last-child { break-after: auto; page-break-after: auto; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="cabecera">
+    <div class="contenedor">
+      <img id="logoCabecera" alt="Logo Comercial Los Andes">
+      <div>
+        <h1>Generador de certificados</h1>
+        <div class="sub">Recursos Humanos · Capacitaciones</div>
+      </div>
+      <div class="guardado" id="estadoGuardado" role="status" aria-live="polite"></div>
+    </div>
+  </header>
+
+  <main class="contenedor">
+    <div class="resumen">
+      <div class="dato"><div class="num" id="resTotal">0</div><div class="etq">Participantes</div></div>
+      <div class="dato ok"><div class="num" id="resAprob">0</div><div class="etq">Aprobados (nota 14 o más)</div></div>
+      <div class="dato mal"><div class="num" id="resDesap">0</div><div class="etq">No aprobados</div></div>
+      <div class="accion">
+        <button class="btn primario" type="button" data-imprimir>Imprimir / Guardar PDF</button>
+        <div class="error" data-error-imprimir></div>
+      </div>
+    </div>
+
+    <!-- 1. Tabla de control -->
+    <section class="tarjeta" id="secTabla">
+      <h2><span class="paso">1</span> Tabla de control</h2>
+      <p class="ayuda">Solo reciben certificado quienes tienen nota de <b>14 o más</b>. El código de verificación se asigna en el orden de la lista.</p>
+      <div class="tabla-envoltura">
+        <table>
+          <thead>
+            <tr>
+              <th class="num">N°</th><th>Participante</th><th>Curso</th>
+              <th class="num">Nota</th><th>Estado</th><th>Código</th><th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="cuerpoTabla"></tbody>
+        </table>
+      </div>
+      <div class="botones pie-tabla">
+        <button class="btn peligro chico" type="button" id="btnVaciar">Borrar toda la lista</button>
+        <button class="btn chico" type="button" id="btnRestaurar">Restaurar lista original (15 participantes)</button>
+      </div>
+    </section>
+
+    <!-- 2. Agregar / editar -->
+    <section class="tarjeta" id="secForm">
+      <h2><span class="paso">2</span> <span id="tituloForm">Agregar un participante</span></h2>
+      <p class="ayuda" id="ayudaForm">Complete los datos y presione «Agregar participante».</p>
+      <form id="formPart" novalidate>
+        <div class="rejilla">
+          <div class="campo ancho" data-campo="nombre">
+            <label for="fNombre">Nombres y apellidos</label>
+            <input id="fNombre" autocomplete="off">
+            <div class="error"></div>
+          </div>
+          <div class="campo" data-campo="dni">
+            <label for="fDni">DNI <span class="nota-campo">(8 dígitos)</span></label>
+            <input id="fDni" inputmode="numeric" maxlength="8" autocomplete="off">
+            <div class="error"></div>
+          </div>
+          <div class="campo" data-campo="area">
+            <label for="fArea">Área <span class="nota-campo">(opcional)</span></label>
+            <input id="fArea" autocomplete="off">
+            <div class="error"></div>
+          </div>
+          <div class="campo ancho" data-campo="curso">
+            <label for="fCurso">Curso</label>
+            <input id="fCurso" autocomplete="off">
+            <div class="error"></div>
+          </div>
+          <div class="campo" data-campo="horas">
+            <label for="fHoras">Horas</label>
+            <input id="fHoras" inputmode="decimal" autocomplete="off">
+            <div class="error"></div>
+          </div>
+          <div class="campo" data-campo="fecha">
+            <label for="fFecha">Fecha de fin <span class="nota-campo">(dd/mm/aaaa)</span></label>
+            <input id="fFecha" placeholder="dd/mm/aaaa" inputmode="numeric" maxlength="10" autocomplete="off">
+            <div class="error"></div>
+          </div>
+          <div class="campo" data-campo="nota">
+            <label for="fNota">Nota final <span class="nota-campo">(0 a 20)</span></label>
+            <input id="fNota" inputmode="decimal" autocomplete="off">
+            <div class="error"></div>
+          </div>
+        </div>
+        <div class="botones" style="margin-top:16px">
+          <button class="btn primario" type="submit" id="btnGuardarPart">Agregar participante</button>
+          <button class="btn" type="button" id="btnCancelarEd" hidden>Cancelar edición</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- 3. Pegar lista -->
+    <section class="tarjeta" id="secPegar">
+      <h2><span class="paso">3</span> Pegar una lista nueva desde Excel</h2>
+      <p class="ayuda">Para el siguiente curso: en Excel seleccione las filas (con o sin la fila de títulos), cópielas con <b>Ctrl+C</b> y péguelas aquí con <b>Ctrl+V</b>.</p>
+      <div class="campo" data-campo="pegado">
+        <label for="txtPegar">Lista copiada desde Excel</label>
+        <textarea id="txtPegar" spellcheck="false" placeholder="Nombres y apellidos	DNI	Área	Curso	Horas	Fecha de fin	Nota final"></textarea>
+        <div class="error" id="errPegar"></div>
+      </div>
+      <details class="formato">
+        <summary>¿Qué columnas debe tener?</summary>
+        <p>En este orden: <b>Nombres y apellidos · DNI · Área · Curso · Horas · Fecha de fin · Nota final</b>. Si copia también la fila de títulos, las columnas pueden estar en cualquier orden. Las fechas pueden venir como <code>30/10/2026</code>.</p>
+      </details>
+      <div class="botones" style="margin-top:14px">
+        <button class="btn primario" type="button" id="btnReemplazar">Reemplazar la lista actual</button>
+        <button class="btn" type="button" id="btnAgregarLista">Agregar al final de la lista</button>
+      </div>
+    </section>
+
+    <!-- 4. Texto modelo -->
+    <section class="tarjeta" id="secTexto">
+      <h2><span class="paso">4</span> Texto del certificado y firma</h2>
+      <p class="ayuda">Los campos entre llaves se reemplazan con los datos de cada participante. Haga clic en un campo para insertarlo donde está el cursor.</p>
+      <div class="rejilla">
+        <div class="campo ancho" data-campo="titulo">
+          <label for="tTitulo">Título</label>
+          <input id="tTitulo" autocomplete="off">
+          <div class="error"></div>
+        </div>
+        <div class="campo ancho" data-campo="texto">
+          <label for="tTexto">Texto modelo</label>
+          <div class="chips" id="chips"></div>
+          <textarea id="tTexto" spellcheck="true"></textarea>
+          <div class="error"></div>
+          <div class="aviso" id="avisoTexto"></div>
+        </div>
+        <div class="campo" data-campo="firmante">
+          <label for="tFirmante">Nombre de quien firma</label>
+          <input id="tFirmante" autocomplete="off">
+          <div class="error"></div>
+        </div>
+        <div class="campo" data-campo="cargo">
+          <label for="tCargo">Cargo de quien firma</label>
+          <input id="tCargo" autocomplete="off">
+          <div class="error"></div>
+        </div>
+        <div class="campo" data-campo="prefijo">
+          <label for="tPrefijo">Inicio del código <span class="nota-campo">(ej. CERT-2026)</span></label>
+          <input id="tPrefijo" autocomplete="off">
+          <div class="error"></div>
+        </div>
+      </div>
+      <div class="botones" style="margin-top:14px">
+        <button class="btn chico" type="button" id="btnTextoOriginal">Volver al texto original</button>
+      </div>
+      <div class="imagenes">
+        <div class="imagen-caja">
+          <b>Logo</b>
+          <div class="muestra"><img id="muestraLogo" alt="Logo actual"></div>
+          <div class="botones">
+            <label class="btn chico" for="archLogo">Cambiar logo</label>
+            <button class="btn chico" type="button" id="btnLogoOrig">Usar el original</button>
+          </div>
+          <input type="file" id="archLogo" accept="image/png,image/jpeg,image/webp">
+          <div class="error" id="errLogo"></div>
+        </div>
+        <div class="imagen-caja">
+          <b>Firma escaneada</b>
+          <div class="muestra"><img id="muestraFirma" alt="Firma actual"></div>
+          <div class="botones">
+            <label class="btn chico" for="archFirma">Cambiar firma</label>
+            <button class="btn chico" type="button" id="btnFirmaOrig">Usar la original</button>
+          </div>
+          <input type="file" id="archFirma" accept="image/png,image/jpeg,image/webp">
+          <div class="error" id="errFirma"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. Vista previa -->
+    <section class="tarjeta" id="secPrevia">
+      <h2><span class="paso">5</span> Vista previa</h2>
+      <p class="ayuda">Revise un certificado antes de generarlos todos. Así se verá cada hoja A4 horizontal.</p>
+      <div class="previa-controles">
+        <div class="campo">
+          <label for="selPrevia">Participante</label>
+          <select id="selPrevia"></select>
+        </div>
+        <div class="botones">
+          <button class="btn" type="button" id="btnAnt" aria-label="Certificado anterior">◀ Anterior</button>
+          <button class="btn" type="button" id="btnSig" aria-label="Certificado siguiente">Siguiente ▶</button>
+        </div>
+      </div>
+      <div class="previa-marco"><div class="previa-escala" id="previaEscala"></div></div>
+      <div class="previa-info" id="previaInfo"></div>
+      <div class="botones" style="margin-top:16px; justify-content:center">
+        <button class="btn primario" type="button" data-imprimir>Imprimir / Guardar PDF</button>
+      </div>
+      <div class="error" data-error-imprimir style="text-align:center"></div>
+      <p class="ayuda" style="margin-top:12px; text-align:center">Para obtener un PDF, en la ventana de impresión elija «Guardar como PDF». Se genera una página por certificado.</p>
+    </section>
+
+    <!-- 6. Copia de seguridad -->
+    <section class="tarjeta" id="secCopia">
+      <h2><span class="paso">6</span> Copia de seguridad</h2>
+      <p class="ayuda">Los datos se guardan solos en este navegador. Descargue una copia de vez en cuando, o para pasar los datos a otra computadora.</p>
+      <div class="botones">
+        <button class="btn" type="button" id="btnDescargar">Descargar copia de seguridad</button>
+        <label class="btn" for="archCopia">Cargar copia de seguridad</label>
+        <input type="file" id="archCopia" accept=".json,application/json">
+      </div>
+      <div class="error" id="errCopia"></div>
+    </section>
+  </main>
+</div>
+
+<div id="areaImpresion" aria-hidden="true"></div>
+
+<div class="velo" id="velo" role="dialog" aria-modal="true" aria-labelledby="dlgTitulo">
+  <div class="dialogo">
+    <h3 id="dlgTitulo">Confirmar</h3>
+    <p id="dlgTexto"></p>
+    <div class="botones">
+      <button class="btn" type="button" id="dlgNo">Cancelar</button>
+      <button class="btn peligro lleno" type="button" id="dlgSi">Sí, continuar</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ===== Datos incluidos ===== */
+  var LOGO_ORIGINAL = "data:image/png;base64,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";
+  var FIRMA_ORIGINAL = "data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20width%3D%27500%27%20height%3D%27160%27%3E%3Ctext%20x%3D%2730%27%20y%3D%27100%27%20font-family%3D%27Brush%20Script%20MT%2C%20Segoe%20Script%2C%20cursive%27%20font-style%3D%27italic%27%20font-size%3D%2764%27%20fill%3D%27%231f2a5c%27%3ELuc%C3%ADa%20Ram%C3%ADrez%3C/text%3E%3Cpath%20d%3D%27M30%20125%20Q250%20115%20450%20120%27%20stroke%3D%27%231f2a5c%27%20stroke-width%3D%272%27%20fill%3D%27none%27/%3E%3C/svg%3E";
+  var NOTA_MINIMA = 14;
+  var CAMPOS = ["NOMBRE", "DNI", "CURSO", "HORAS", "FECHA"];
+  var CLAVE = "generadorCertificadosLosAndes.v1";
+  var CURSO1 = "Atención al cliente de excelencia";
+
+  var LISTA_ORIGINAL = [
+    ["Ximena Carrasco Ñique", "40000101", "Ventas", 17],
+    ["Martín Ugarte Salas", "40000102", "Ventas", 15],
+    ["Valeria Inés Montoya Ríos", "40000103", "Ventas", 18],
+    ["Juan Bautista de los Ríos Echegaray Valdivieso", "40000104", "Logística", 16],
+    ["Paola Andrea Zúñiga Flores", "40000105", "Administración", 12],
+    ["Diego Armando Llanos Puma", "40000106", "Ventas", 14],
+    ["Lorena Beltrán Ochoa", "40000107", "Ventas", 19],
+    ["Hugo Paredes Cárdenas", "40000108", "Logística", 11],
+    ["Fiorella Ávila Mejía", "40000109", "Administración", 16],
+    ["Íñigo Robles Gálvez", "40000110", "Ventas", 15],
+    ["Natalia Cueva Yupanqui", "40000111", "Ventas", 13],
+    ["Sebastián Lozano Ccori", "40000112", "Ventas", 17],
+    ["Daniela Soria Núñez", "40000113", "Administración", 18],
+    ["Bruno Espinoza Lima", "40000114", "Logística", 14],
+    ["Camila Herrera Condori", "40000115", "Logística", 16]
+  ].map(function (r) {
+    return { nombre: r[0], dni: r[1], area: r[2], curso: CURSO1, horas: 12, fecha: "2026-10-30", nota: r[3] };
+  });
+
+  var PLANTILLA_ORIGINAL = {
+    titulo: "CERTIFICADO",
+    texto: "Comercial Los Andes S.A.C. certifica que {NOMBRE}, identificado con DNI {DNI}, ha participado y aprobado el curso {CURSO}, con una duración de {HORAS} horas, culminado el {FECHA}.",
+    firmante: "Lucía Ramírez",
+    cargo: "Jefa de Recursos Humanos",
+    prefijo: "CERT-2026"
+  };
+
+  function copia(o) { return JSON.parse(JSON.stringify(o)); }
+  function estadoInicial() {
+    return { participantes: copia(LISTA_ORIGINAL), plantilla: copia(PLANTILLA_ORIGINAL), logo: null, firma: null };
+  }
+
+  var estado = estadoInicial();
+  var edicion = -1;      // índice del participante en edición (-1 = agregando)
+  var previaIdx = -1;    // índice (en la lista completa) del participante en vista previa
+
+  var $ = function (id) { return document.getElementById(id); };
+
+  /* ===== Utilidades de formato ===== */
+  function dosDig(n) { return (n < 10 ? "0" : "") + n; }
+  function fechaTexto(iso) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || "");
+    return m ? m[3] + "/" + m[2] + "/" + m[1] : "";
+  }
+  function hoyTexto() { var d = new Date(); return dosDig(d.getDate()) + "-" + dosDig(d.getMonth() + 1) + "-" + d.getFullYear(); }
+  function numeroTexto(n) {
+    if (typeof n !== "number" || !isFinite(n)) return "";
+    return Number.isInteger(n) ? String(n) : n.toLocaleString("es-PE", { maximumFractionDigits: 2 });
+  }
+  function normalizar(s) {
+    return String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
+  }
+  function limpiarNombre(s) { return String(s == null ? "" : s).normalize("NFC").replace(/\s+/g, " ").trim(); }
+
+  // Acepta dd/mm/aaaa (también con - o .), aaaa-mm-dd y número de serie de Excel.
+  function leerFecha(valor) {
+    var s = String(valor == null ? "" : valor).trim();
+    var d, m, a, r;
+    if ((r = /^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/.exec(s))) { d = +r[1]; m = +r[2]; a = +r[3]; }
+    else if ((r = /^(\d{4})-(\d{1,2})-(\d{1,2})(?:[ T].*)?$/.exec(s))) { a = +r[1]; m = +r[2]; d = +r[3]; }
+    else if (/^\d{5}$/.test(s)) {
+      var f = new Date(Date.UTC(1899, 11, 30) + (+s) * 86400000);
+      a = f.getUTCFullYear(); m = f.getUTCMonth() + 1; d = f.getUTCDate();
+    } else return null;
+    if (a < 1990 || a > 2100 || m < 1 || m > 12 || d < 1) return null;
+    var fin = new Date(a, m, 0).getDate();
+    if (d > fin) return null;
+    return a + "-" + dosDig(m) + "-" + dosDig(d);
+  }
+  function leerNumero(valor) {
+    var s = String(valor == null ? "" : valor).trim().replace(",", ".");
+    if (!/^\d+(\.\d+)?$/.test(s)) return null;
+    return Number(s);
+  }
+
+  /* ===== Reglas ===== */
+  function aprobado(p) { return p.nota >= NOTA_MINIMA; }
+  function codigos() {
+    var res = [], n = 0, pref = (estado.plantilla.prefijo || "").trim();
+    estado.participantes.forEach(function (p, i) {
+      res[i] = aprobado(p) ? pref + "-" + String(++n).padStart(4, "0") : null;
+    });
+    return res;
+  }
+
+  // Valida los datos crudos de un participante. Devuelve {datos, errores:{campo:mensaje}}.
+  function validarParticipante(c) {
+    var e = {}, datos = {};
+    datos.nombre = limpiarNombre(c.nombre);
+    if (!datos.nombre) e.nombre = "Escriba los nombres y apellidos.";
+    else if (datos.nombre.length < 3) e.nombre = "El nombre es demasiado corto.";
+    else if (/\d/.test(datos.nombre)) e.nombre = "El nombre no debe tener números. ¿Se cambió de columna con el DNI?";
+
+    datos.dni = String(c.dni == null ? "" : c.dni).trim();
+    if (!datos.dni) e.dni = "Escriba el DNI.";
+    else if (!/^\d{8}$/.test(datos.dni))
+      e.dni = /^\d{1,7}$/.test(datos.dni)
+        ? "El DNI debe tener 8 dígitos (tiene " + datos.dni.length + "). Si Excel quitó el cero inicial, agréguelo."
+        : "El DNI debe tener exactamente 8 números, sin letras ni espacios.";
+
+    datos.area = limpiarNombre(c.area);
+    datos.curso = limpiarNombre(c.curso);
+    if (!datos.curso) e.curso = "Escriba el nombre del curso.";
+
+    datos.horas = leerNumero(c.horas);
+    if (String(c.horas == null ? "" : c.horas).trim() === "") e.horas = "Escriba la cantidad de horas.";
+    else if (datos.horas === null || datos.horas <= 0 || datos.horas > 1000) e.horas = "Las horas deben ser un número mayor que 0 (ej. 12).";
+
+    datos.fecha = leerFecha(c.fecha);
+    if (String(c.fecha == null ? "" : c.fecha).trim() === "") e.fecha = "Escriba la fecha de fin.";
+    else if (!datos.fecha) e.fecha = "Fecha no válida. Use el formato dd/mm/aaaa, por ejemplo 30/10/2026.";
+
+    datos.nota = leerNumero(c.nota);
+    if (String(c.nota == null ? "" : c.nota).trim() === "") e.nota = "Escriba la nota final.";
+    else if (datos.nota === null || datos.nota < 0 || datos.nota > 20) e.nota = "La nota debe ser un número entre 0 y 20.";
+
+    return { datos: datos, errores: e };
+  }
+
+  function validarPlantilla(t) {
+    var e = {}, avisos = [];
+    if (!t.titulo.trim()) e.titulo = "Escriba el título del certificado (ej. CERTIFICADO).";
+    if (!t.texto.trim()) e.texto = "El texto del certificado no puede quedar vacío.";
+    else {
+      var malos = [];
+      (t.texto.match(/\{[^{}]*\}/g) || []).forEach(function (m) {
+        if (CAMPOS.indexOf(m.slice(1, -1)) < 0 && malos.indexOf(m) < 0) malos.push(m);
+      });
+      if (malos.length) e.texto = "Campo no reconocido: " + malos.join(", ") + ". Use solo {NOMBRE}, {DNI}, {CURSO}, {HORAS} o {FECHA}, en mayúsculas.";
+      else if (/[{}]/.test(t.texto.replace(/\{(NOMBRE|DNI|CURSO|HORAS|FECHA)\}/g, "")))
+        e.texto = "Hay una llave { o } sin cerrar. Revise que cada campo esté escrito así: {NOMBRE}.";
+      if (t.texto.indexOf("{NOMBRE}") < 0) avisos.push("El texto no incluye {NOMBRE}. El nombre se mostrará igual, en grande, debajo del texto.");
+    }
+    if (!t.firmante.trim()) e.firmante = "Escriba el nombre de quien firma.";
+    if (!t.cargo.trim()) e.cargo = "Escriba el cargo de quien firma.";
+    if (!t.prefijo.trim()) e.prefijo = "Escriba el inicio del código (ej. CERT-2026).";
+    else if (!/^[A-Za-z0-9][A-Za-z0-9\-]*$/.test(t.prefijo.trim())) e.prefijo = "Use solo letras sin tilde, números y guiones (ej. CERT-2026).";
+    return { errores: e, avisos: avisos };
+  }
+
+  /* ===== Guardado en el navegador ===== */
+  function guardar() {
+    var el = $("estadoGuardado");
+    try {
+      localStorage.setItem(CLAVE, JSON.stringify(estado));
+      var d = new Date();
+      el.textContent = "✓ Guardado automáticamente a las " + dosDig(d.getHours()) + ":" + dosDig(d.getMinutes());
+      el.classList.remove("error");
+    } catch (err) {
+      el.textContent = "⚠ No se pudo guardar en este navegador. Use «Descargar copia de seguridad».";
+      el.classList.add("error");
+    }
+  }
+  function cargarGuardado() {
+    try {
+      var s = localStorage.getItem(CLAVE);
+      if (!s) return;
+      var d = JSON.parse(s);
+      if (estadoValido(d) === true) estado = completar(d);
+    } catch (err) { /* se usan los datos incluidos */ }
+  }
+  function completar(d) {
+    var t = d.plantilla || {};
+    return {
+      participantes: d.participantes,
+      plantilla: {
+        titulo: typeof t.titulo === "string" ? t.titulo : PLANTILLA_ORIGINAL.titulo,
+        texto: typeof t.texto === "string" ? t.texto : PLANTILLA_ORIGINAL.texto,
+        firmante: typeof t.firmante === "string" ? t.firmante : PLANTILLA_ORIGINAL.firmante,
+        cargo: typeof t.cargo === "string" ? t.cargo : PLANTILLA_ORIGINAL.cargo,
+        prefijo: typeof t.prefijo === "string" ? t.prefijo : PLANTILLA_ORIGINAL.prefijo
+      },
+      logo: typeof d.logo === "string" && d.logo.indexOf("data:image/") === 0 ? d.logo : null,
+      firma: typeof d.firma === "string" && d.firma.indexOf("data:image/") === 0 ? d.firma : null
+    };
+  }
+  // Devuelve true o un mensaje de error.
+  function estadoValido(d) {
+    if (!d || typeof d !== "object" || !Array.isArray(d.participantes)) return "El archivo no contiene una lista de participantes.";
+    for (var i = 0; i < d.participantes.length; i++) {
+      var p = d.participantes[i] || {};
+      var v = validarParticipante({ nombre: p.nombre, dni: p.dni, area: p.area, curso: p.curso, horas: p.horas, fecha: fechaTexto(p.fecha) || p.fecha, nota: p.nota });
+      var k = Object.keys(v.errores);
+      if (k.length) return "El participante N° " + (i + 1) + " tiene datos incorrectos: " + v.errores[k[0]];
+      d.participantes[i] = v.datos;
+    }
+    return true;
+  }
+
+  /* ===== Diálogo de confirmación y avisos ===== */
+  var resolverDlg = null, focoAnterior = null;
+  function confirmar(titulo, texto, botonSi) {
+    $("dlgTitulo").textContent = titulo;
+    $("dlgTexto").textContent = texto;
+    $("dlgSi").textContent = botonSi || "Sí, continuar";
+    focoAnterior = document.activeElement;
+    $("velo").classList.add("abierto");
+    $("dlgNo").focus();
+    return new Promise(function (res) { resolverDlg = res; });
+  }
+  function cerrarDlg(valor) {
+    $("velo").classList.remove("abierto");
+    if (focoAnterior && focoAnterior.focus) focoAnterior.focus();
+    var r = resolverDlg; resolverDlg = null;
+    if (r) r(valor);
+  }
+  $("dlgSi").addEventListener("click", function () { cerrarDlg(true); });
+  $("dlgNo").addEventListener("click", function () { cerrarDlg(false); });
+  $("velo").addEventListener("click", function (e) { if (e.target === this) cerrarDlg(false); });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && resolverDlg) cerrarDlg(false); });
+
+  var toastTimer;
+  function aviso(msg) {
+    var t = $("toast");
+    t.textContent = msg; t.classList.add("visible");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { t.classList.remove("visible"); }, 3200);
+  }
+
+  /* ===== Certificado ===== */
+  function valorCampo(campo, p) {
+    switch (campo) {
+      case "NOMBRE": return p.nombre;
+      case "DNI": return p.dni;
+      case "CURSO": return p.curso;
+      case "HORAS": return numeroTexto(p.horas);
+      case "FECHA": return fechaTexto(p.fecha);
+    }
+    return "";
+  }
+  function llenarTexto(el, texto, p) {
+    texto.split(/(\{(?:NOMBRE|DNI|CURSO|HORAS|FECHA)\})/).forEach(function (parte) {
+      var m = /^\{(\w+)\}$/.exec(parte);
+      if (m) { var b = document.createElement("strong"); b.textContent = valorCampo(m[1], p); el.appendChild(b); }
+      else if (parte) el.appendChild(document.createTextNode(parte));
+    });
+  }
+  function crearCertificado(p, codigo) {
+    var t = estado.plantilla;
+    var c = document.createElement("div");
+    c.className = "cert";
+    c.innerHTML =
+      '<div class="cert-borde"></div>' +
+      '<div class="cert-contenido">' +
+        '<img class="cert-logo" alt="">' +
+        '<div class="cert-titulo"></div>' +
+        '<div class="cert-subrayado"></div>' +
+        '<div class="cert-cuerpo">' +
+          '<p class="cert-texto cert-antes"></p>' +
+          '<div class="cert-nombre"><span></span></div>' +
+          '<p class="cert-texto cert-despues"></p>' +
+        '</div>' +
+        '<div class="cert-pie">' +
+          '<div></div>' +
+          '<div class="cert-firma"><img alt=""><div class="linea"></div><div class="quien"></div><div class="cargo"></div></div>' +
+          '<div class="cert-codigo">Código de verificación<b></b></div>' +
+        '</div>' +
+      '</div>';
+    c.querySelector(".cert-logo").src = estado.logo || LOGO_ORIGINAL;
+    c.querySelector(".cert-firma img").src = estado.firma || FIRMA_ORIGINAL;
+    c.querySelector(".cert-titulo").textContent = t.titulo.trim();
+    c.querySelector(".quien").textContent = t.firmante.trim();
+    c.querySelector(".cargo").textContent = t.cargo.trim();
+    c.querySelector(".cert-codigo b").textContent = codigo;
+    c.querySelector(".cert-nombre span").textContent = p.nombre;
+
+    // El nombre va destacado en su propia línea, en el lugar donde está {NOMBRE}.
+    var texto = t.texto.trim(), pos = texto.indexOf("{NOMBRE}");
+    var antes = pos >= 0 ? texto.slice(0, pos).trim() : texto;
+    var despues = pos >= 0 ? texto.slice(pos + 8).replace(/^[\s,;:]+/, "") : "";
+    var elAntes = c.querySelector(".cert-antes"), elDesp = c.querySelector(".cert-despues");
+    if (antes) llenarTexto(elAntes, antes, p); else elAntes.remove();
+    if (despues) llenarTexto(elDesp, despues, p); else elDesp.remove();
+    return c;
+  }
+
+  // Reduce la letra del nombre (y del texto si hiciera falta) hasta que todo entre en la hoja.
+  function ajustarCertificado(c) {
+    var caja = c.querySelector(".cert-nombre"), nom = caja.querySelector("span");
+    var cuerpo = c.querySelector(".cert-cuerpo"), textos = c.querySelectorAll(".cert-texto");
+    var tit = c.querySelector(".cert-titulo");
+    var t = 46;
+    tit.style.fontSize = t + "px";
+    while (tit.scrollWidth > tit.parentNode.clientWidth && t > 20) { t -= 1; tit.style.fontSize = t + "px"; }
+
+    var f = 44;
+    caja.classList.remove("envolver");
+    nom.style.fontSize = f + "px";
+    while (nom.offsetWidth > caja.clientWidth && f > 14) { f -= 1; nom.style.fontSize = f + "px"; }
+    if (nom.offsetWidth > caja.clientWidth) caja.classList.add("envolver"); // último recurso: dos líneas, nunca cortar
+
+    var g = 21;
+    function fija(n) { for (var i = 0; i < textos.length; i++) textos[i].style.fontSize = n + "px"; }
+    fija(g);
+    while (cuerpo.scrollHeight > cuerpo.clientHeight + 1 && g > 11) { g -= 1; fija(g); }
+    while (cuerpo.scrollHeight > cuerpo.clientHeight + 1 && f > 14) { f -= 1; nom.style.fontSize = f + "px"; }
+  }
+
+  function esperarImagenes(raiz) {
+    var imgs = Array.prototype.slice.call(raiz.querySelectorAll("img"));
+    return Promise.all(imgs.map(function (im) {
+      if (im.complete && im.naturalWidth) return Promise.resolve();
+      return new Promise(function (res) { im.onload = im.onerror = function () { res(); }; });
+    }));
+  }
+
+  /* ===== Pintar la pantalla ===== */
+  function pintarTodo() {
+    pintarResumen();
+    pintarTabla();
+    pintarPrevia();
+    pintarImagenes();
+  }
+
+  function pintarResumen() {
+    var tot = estado.participantes.length, ap = estado.participantes.filter(aprobado).length;
+    $("resTotal").textContent = tot;
+    $("resAprob").textContent = ap;
+    $("resDesap").textContent = tot - ap;
+    document.querySelectorAll("[data-imprimir]").forEach(function (b) {
+      b.textContent = "Imprimir / Guardar PDF" + (ap ? " (" + ap + (ap === 1 ? " certificado)" : " certificados)") : "");
+    });
+  }
+
+  function td(texto, clase, etq) {
+    var c = document.createElement("td");
+    if (clase) c.className = clase;
+    if (etq) c.setAttribute("data-etq", etq);
+    c.textContent = texto;
+    return c;
+  }
+  // Celda con texto principal y una línea secundaria más pequeña.
+  function td2(texto, sub, clase, etq) {
+    var c = td("", clase, etq), b = document.createElement("div"), s = document.createElement("div");
+    b.textContent = texto; s.className = "sub"; s.textContent = sub;
+    c.appendChild(b); c.appendChild(s);
+    return c;
+  }
+  function boton(texto, clase, accion, etiqueta) {
+    var b = document.createElement("button");
+    b.type = "button"; b.className = "btn chico " + (clase || ""); b.textContent = texto;
+    if (etiqueta) b.setAttribute("aria-label", etiqueta);
+    b.addEventListener("click", accion);
+    return b;
+  }
+
+  function pintarTabla() {
+    var cuerpo = $("cuerpoTabla"), cods = codigos();
+    cuerpo.innerHTML = "";
+    if (!estado.participantes.length) {
+      var tr0 = document.createElement("tr"), c0 = td("No hay participantes. Agregue uno en el paso 2 o pegue una lista desde Excel en el paso 3.", "vacio");
+      c0.colSpan = 7; tr0.appendChild(c0); cuerpo.appendChild(tr0);
+    }
+    estado.participantes.forEach(function (p, i) {
+      var tr = document.createElement("tr"), ok = aprobado(p);
+      tr.appendChild(td(i + 1, "num n"));
+      tr.appendChild(td2(p.nombre, "DNI " + p.dni + (p.area ? " · " + p.area : ""), "nombre"));
+      tr.appendChild(td2(p.curso, numeroTexto(p.horas) + " horas · fin " + fechaTexto(p.fecha), "curso", "Curso"));
+      tr.appendChild(td(numeroTexto(p.nota), "num", "Nota"));
+      var ce = document.createElement("td"), sp = document.createElement("span");
+      ce.setAttribute("data-etq", "Estado");
+      sp.className = "estado " + (ok ? "ok" : "mal"); sp.textContent = ok ? "Aprobado" : "No aprobado";
+      ce.appendChild(sp); tr.appendChild(ce);
+      tr.appendChild(td(cods[i] || "—", "cod", "Código"));
+      var ca = document.createElement("td"); ca.className = "acc";
+      if (ok) ca.appendChild(boton("Ver", "", function () { verPrevia(i); }, "Ver certificado de " + p.nombre));
+      ca.appendChild(boton("Editar", "", function () { editar(i); }, "Editar a " + p.nombre));
+      ca.appendChild(boton("Eliminar", "peligro", function () { eliminar(i); }, "Eliminar a " + p.nombre));
+      tr.appendChild(ca);
+      cuerpo.appendChild(tr);
+    });
+  }
+
+  function aprobadosIdx() {
+    var r = [];
+    estado.participantes.forEach(function (p, i) { if (aprobado(p)) r.push(i); });
+    return r;
+  }
+
+  function pintarPrevia() {
+    var sel = $("selPrevia"), lista = aprobadosIdx(), cods = codigos();
+    sel.innerHTML = "";
+    if (lista.indexOf(previaIdx) < 0) previaIdx = lista.length ? lista[0] : -1;
+    lista.forEach(function (i) {
+      var o = document.createElement("option");
+      o.value = i; o.textContent = cods[i] + " · " + estado.participantes[i].nombre;
+      sel.appendChild(o);
+    });
+    sel.disabled = !lista.length;
+    var pos = lista.indexOf(previaIdx);
+    $("btnAnt").disabled = pos <= 0;
+    $("btnSig").disabled = pos < 0 || pos >= lista.length - 1;
+
+    var marco = $("previaEscala");
+    marco.innerHTML = "";
+    if (previaIdx < 0) {
+      marco.style.width = "100%"; marco.style.height = "auto";
+      marco.innerHTML = '<div class="vacio">No hay participantes aprobados (nota 14 o más), así que no hay certificados para mostrar.</div>';
+      $("previaInfo").textContent = "";
+      return;
+    }
+    sel.value = previaIdx;
+    var c = crearCertificado(estado.participantes[previaIdx], cods[previaIdx]);
+    marco.appendChild(c);
+    escalarPrevia();
+    ajustarCertificado(c);
+    esperarImagenes(c).then(function () { ajustarCertificado(c); });
+    $("previaInfo").textContent = "Certificado " + (pos + 1) + " de " + lista.length + " · Hoja A4 horizontal";
+  }
+
+  function escalarPrevia() {
+    var marco = $("previaEscala"), c = marco.querySelector(".cert");
+    if (!c) return;
+    var ancho = marco.parentNode.clientWidth - parseFloat(getComputedStyle(marco.parentNode).paddingLeft) * 2;
+    var w = c.offsetWidth, h = c.offsetHeight, k = Math.min(1, ancho / w);
+    c.style.transform = "scale(" + k + ")";
+    marco.style.width = (w * k) + "px";
+    marco.style.height = (h * k) + "px";
+  }
+  window.addEventListener("resize", escalarPrevia);
+
+  function verPrevia(i) {
+    previaIdx = i;
+    pintarPrevia();
+    $("secPrevia").scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function pintarImagenes() {
+    $("logoCabecera").src = estado.logo || LOGO_ORIGINAL;
+    $("muestraLogo").src = estado.logo || LOGO_ORIGINAL;
+    $("muestraFirma").src = estado.firma || FIRMA_ORIGINAL;
+    $("btnLogoOrig").disabled = !estado.logo;
+    $("btnFirmaOrig").disabled = !estado.firma;
+  }
+
+  /* ===== Formulario de participante ===== */
+  var camposForm = { nombre: "fNombre", dni: "fDni", area: "fArea", curso: "fCurso", horas: "fHoras", fecha: "fFecha", nota: "fNota" };
+
+  function mostrarErrores(contenedor, errores) {
+    contenedor.querySelectorAll(".campo[data-campo]").forEach(function (c) {
+      var msg = errores[c.getAttribute("data-campo")] || "";
+      var caja = c.querySelector(".error");
+      if (caja && caja.id !== "errPegar") caja.textContent = msg;
+      c.classList.toggle("invalido", !!msg);
+      var inp = c.querySelector("input, textarea, select");
+      if (inp) { if (msg) inp.setAttribute("aria-invalid", "true"); else inp.removeAttribute("aria-invalid"); }
+    });
+  }
+
+  function leerForm() {
+    var c = {};
+    Object.keys(camposForm).forEach(function (k) { c[k] = $(camposForm[k]).value; });
+    return c;
+  }
+
+  $("formPart").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var v = validarParticipante(leerForm());
+    var dup = estado.participantes.findIndex(function (p, i) { return i !== edicion && p.dni === v.datos.dni; });
+    if (!v.errores.dni && dup >= 0) v.errores.dni = "Este DNI ya está registrado (N° " + (dup + 1) + ", " + estado.participantes[dup].nombre + ").";
+    mostrarErrores($("formPart"), v.errores);
+    var malos = Object.keys(v.errores);
+    if (malos.length) { $(camposForm[malos[0]]).focus(); return; }
+    if (edicion >= 0) {
+      estado.participantes[edicion] = v.datos;
+      aviso("Cambios guardados: " + v.datos.nombre);
+    } else {
+      estado.participantes.push(v.datos);
+      aviso("Participante agregado: " + v.datos.nombre);
+    }
+    terminarEdicion();
+    guardar(); pintarTodo();
+  });
+
+  // Quita el error de un campo apenas se corrige.
+  Object.keys(camposForm).forEach(function (k) {
+    $(camposForm[k]).addEventListener("input", function () {
+      var c = this.closest(".campo");
+      if (c.classList.contains("invalido")) { c.classList.remove("invalido"); c.querySelector(".error").textContent = ""; this.removeAttribute("aria-invalid"); }
+    });
+  });
+  $("fFecha").addEventListener("input", function (e) {
+    // Agrega las barras automáticamente al escribir: 30102026 → 30/10/2026
+    if (e.inputType && e.inputType.indexOf("delete") === 0) return;
+    var d = this.value.replace(/\D/g, "").slice(0, 8);
+    if (this.value.replace(/[\d\/]/g, "") === "" && d.length >= 2) {
+      this.value = d.slice(0, 2) + "/" + d.slice(2, 4) + (d.length > 4 ? "/" + d.slice(4) : (d.length === 4 ? "/" : ""));
+    }
+  });
+
+  function editar(i) {
+    var p = estado.participantes[i];
+    edicion = i;
+    $("fNombre").value = p.nombre; $("fDni").value = p.dni; $("fArea").value = p.area || "";
+    $("fCurso").value = p.curso; $("fHoras").value = numeroTexto(p.horas); $("fFecha").value = fechaTexto(p.fecha);
+    $("fNota").value = numeroTexto(p.nota);
+    mostrarErrores($("formPart"), {});
+    $("tituloForm").textContent = "Editar participante N° " + (i + 1);
+    $("ayudaForm").textContent = "Corrija los datos y presione «Guardar cambios».";
+    $("btnGuardarPart").textContent = "Guardar cambios";
+    $("btnCancelarEd").hidden = false;
+    $("secForm").scrollIntoView({ behavior: "smooth", block: "start" });
+    setTimeout(function () { $("fNombre").focus({ preventScroll: true }); }, 300);
+  }
+  function terminarEdicion() {
+    edicion = -1;
+    $("formPart").reset();
+    mostrarErrores($("formPart"), {});
+    $("tituloForm").textContent = "Agregar un participante";
+    $("ayudaForm").textContent = "Complete los datos y presione «Agregar participante».";
+    $("btnGuardarPart").textContent = "Agregar participante";
+    $("btnCancelarEd").hidden = true;
+  }
+  $("btnCancelarEd").addEventListener("click", terminarEdicion);
+
+  function eliminar(i) {
+    var p = estado.participantes[i];
+    var extra = aprobado(p) && i < estado.participantes.length - 1 ? "\n\nLos códigos de verificación de los participantes que están debajo se volverán a numerar." : "";
+    confirmar("¿Eliminar participante?", "Se eliminará a " + p.nombre + " (DNI " + p.dni + ") de la lista. Esta acción no se puede deshacer." + extra, "Sí, eliminar")
+      .then(function (ok) {
+        if (!ok) return;
+        estado.participantes.splice(i, 1);
+        if (edicion === i) terminarEdicion(); else if (edicion > i) edicion--;
+        guardar(); pintarTodo();
+        aviso("Participante eliminado: " + p.nombre);
+      });
+  }
+
+  $("btnVaciar").addEventListener("click", function () {
+    var n = estado.participantes.length;
+    if (!n) { aviso("La lista ya está vacía."); return; }
+    confirmar("¿Borrar toda la lista?", "Se borrarán los " + n + " participantes de la lista. Esta acción no se puede deshacer.\n\nSi no está segura, primero descargue una copia de seguridad.", "Sí, borrar todo")
+      .then(function (ok) {
+        if (!ok) return;
+        estado.participantes = []; terminarEdicion();
+        guardar(); pintarTodo(); aviso("Lista borrada.");
+      });
+  });
+
+  $("btnRestaurar").addEventListener("click", function () {
+    confirmar("¿Restaurar la lista original?", "La lista actual (" + estado.participantes.length + " participantes) se reemplazará por los 15 participantes del curso «" + CURSO1 + "».", "Sí, restaurar")
+      .then(function (ok) {
+        if (!ok) return;
+        estado.participantes = copia(LISTA_ORIGINAL); terminarEdicion();
+        guardar(); pintarTodo(); aviso("Lista original restaurada.");
+      });
+  });
+
+  /* ===== Pegar desde Excel ===== */
+  var COLUMNAS = [
+    { k: "nombre", t: "Nombres y apellidos", busca: ["nombre", "apellido", "participante"] },
+    { k: "dni", t: "DNI", busca: ["dni", "documento"] },
+    { k: "area", t: "Área", busca: ["area"] },
+    { k: "curso", t: "Curso", busca: ["curso"] },
+    { k: "horas", t: "Horas", busca: ["hora"] },
+    { k: "fecha", t: "Fecha de fin", busca: ["fecha"] },
+    { k: "nota", t: "Nota final", busca: ["nota", "calificacion"] }
+  ];
+
+  function errorPegado(lineas) {
+    var caja = $("errPegar");
+    caja.innerHTML = "";
+    $("txtPegar").closest(".campo").classList.toggle("invalido", !!lineas.length);
+    if (!lineas.length) return;
+    if (lineas.length === 1) { caja.textContent = lineas[0]; return; }
+    var ul = document.createElement("ul");
+    lineas.slice(0, 15).forEach(function (l) { var li = document.createElement("li"); li.textContent = l; ul.appendChild(li); });
+    if (lineas.length > 15) { var li = document.createElement("li"); li.textContent = "… y " + (lineas.length - 15) + " errores más."; ul.appendChild(li); }
+    caja.appendChild(document.createTextNode("Corrija lo siguiente en Excel y vuelva a pegar (no se importó nada):"));
+    caja.appendChild(ul);
+  }
+
+  // Devuelve {lista} o {errores:[...]}
+  function leerPegado(texto) {
+    var filas = texto.replace(/\r/g, "").split("\n").filter(function (l) { return l.trim() !== ""; });
+    if (!filas.length) return { errores: ["Primero pegue aquí la lista copiada desde Excel."] };
+    if (!filas.some(function (l) { return l.indexOf("\t") >= 0; }))
+      return { errores: ["No se reconocen columnas. Copie las celdas directamente desde Excel (seleccione las filas y presione Ctrl+C) y péguelas aquí."] };
+
+    var celdas = filas.map(function (l) { return l.split("\t"); });
+    var mapa = COLUMNAS.map(function (c, i) { return i; }), inicio = 0;
+    var cab = celdas[0].map(normalizar);
+    var esCabecera = cab.some(function (c) { return c.indexOf("nombre") >= 0; }) && cab.some(function (c) { return /dni|nota|curso/.test(c); });
+    if (esCabecera) {
+      inicio = 1;
+      var faltan = [];
+      mapa = COLUMNAS.map(function (col) {
+        var j = cab.findIndex(function (c) { return col.busca.some(function (b) { return c.indexOf(b) >= 0; }); });
+        if (j < 0 && col.k !== "area") faltan.push(col.t);
+        return j;
+      });
+      if (faltan.length) return { errores: ["En la fila de títulos falta la columna: " + faltan.join(", ") + "."] };
+      if (celdas.length === 1) return { errores: ["Solo se pegó la fila de títulos. Copie también las filas de los participantes."] };
+    }
+
+    var errores = [], lista = [], dnis = {};
+    for (var r = inicio; r < celdas.length; r++) {
+      var fila = celdas[r], num = r + 1, crudo = {};
+      COLUMNAS.forEach(function (col, j) { crudo[col.k] = mapa[j] >= 0 ? (fila[mapa[j]] || "") : ""; });
+      if (!esCabecera && fila.length < 7) {
+        errores.push("Fila " + num + ": tiene " + fila.length + " columnas y se necesitan 7 (Nombres, DNI, Área, Curso, Horas, Fecha de fin, Nota).");
+        continue;
+      }
+      var v = validarParticipante(crudo), quien = v.datos.nombre ? " (" + v.datos.nombre + ")" : "";
+      COLUMNAS.forEach(function (col) { if (v.errores[col.k]) errores.push("Fila " + num + quien + " — " + col.t + ": " + v.errores[col.k]); });
+      if (!v.errores.dni) {
+        if (dnis[v.datos.dni]) errores.push("Fila " + num + quien + " — DNI: el DNI " + v.datos.dni + " está repetido (también en la fila " + dnis[v.datos.dni] + ").");
+        dnis[v.datos.dni] = num;
+      }
+      lista.push(v.datos);
+    }
+    return errores.length ? { errores: errores } : { lista: lista };
+  }
+
+  function importar(reemplazar) {
+    var res = leerPegado($("txtPegar").value);
+    if (res.errores) { errorPegado(res.errores); $("txtPegar").focus(); return; }
+    if (!reemplazar) {
+      var rep = res.lista.filter(function (n) { return estado.participantes.some(function (p) { return p.dni === n.dni; }); });
+      if (rep.length) {
+        errorPegado(rep.slice(0, 15).map(function (n) { return "DNI " + n.dni + " (" + n.nombre + "): ya está en la lista actual."; }));
+        return;
+      }
+    }
+    errorPegado([]);
+    var n = res.lista.length, ap = res.lista.filter(aprobado).length;
+    var resumen = "Se leyeron " + n + (n === 1 ? " participante: " : " participantes: ") + ap + (ap === 1 ? " aprobado" : " aprobados") + " y " + (n - ap) + (n - ap === 1 ? " no aprobado." : " no aprobados.");
+    var titulo = reemplazar ? "¿Reemplazar la lista actual?" : "¿Agregar a la lista?";
+    var texto = reemplazar
+      ? resumen + "\n\nSe borrarán los " + estado.participantes.length + " participantes que hay ahora y se usará la lista nueva. Los códigos empezarán otra vez desde 0001."
+      : resumen + "\n\nSe agregarán al final de la lista actual.";
+    confirmar(titulo, texto, reemplazar ? "Sí, reemplazar" : "Sí, agregar").then(function (ok) {
+      if (!ok) return;
+      estado.participantes = reemplazar ? res.lista : estado.participantes.concat(res.lista);
+      $("txtPegar").value = ""; terminarEdicion(); previaIdx = -1;
+      guardar(); pintarTodo();
+      aviso((reemplazar ? "Lista reemplazada: " : "Agregados: ") + n + (n === 1 ? " participante." : " participantes."));
+      $("secTabla").scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }
+  $("btnReemplazar").addEventListener("click", function () { importar(true); });
+  $("btnAgregarLista").addEventListener("click", function () { importar(false); });
+  $("txtPegar").addEventListener("input", function () { if ($("errPegar").textContent) errorPegado([]); });
+
+  /* ===== Texto modelo ===== */
+  var camposTexto = { titulo: "tTitulo", texto: "tTexto", firmante: "tFirmante", cargo: "tCargo", prefijo: "tPrefijo" };
+  function cargarTextoEnForm() {
+    Object.keys(camposTexto).forEach(function (k) { $(camposTexto[k]).value = estado.plantilla[k]; });
+    revisarTexto();
+  }
+  function revisarTexto() {
+    var v = validarPlantilla(estado.plantilla);
+    mostrarErrores($("secTexto"), v.errores);
+    $("avisoTexto").textContent = v.avisos.join(" ");
+    return Object.keys(v.errores).length === 0;
+  }
+  var temporizador;
+  Object.keys(camposTexto).forEach(function (k) {
+    $(camposTexto[k]).addEventListener("input", function () {
+      estado.plantilla[k] = this.value;
+      revisarTexto();
+      guardar();
+      clearTimeout(temporizador);
+      temporizador = setTimeout(function () { pintarTabla(); pintarPrevia(); }, 250);
+    });
+  });
+  CAMPOS.forEach(function (c) {
+    var b = document.createElement("button");
+    b.type = "button"; b.className = "chip"; b.textContent = "{" + c + "}";
+    b.addEventListener("click", function () {
+      var ta = $("tTexto"), ini = ta.selectionStart, fin = ta.selectionEnd, ins = "{" + c + "}";
+      ta.value = ta.value.slice(0, ini) + ins + ta.value.slice(fin);
+      ta.focus(); ta.selectionStart = ta.selectionEnd = ini + ins.length;
+      ta.dispatchEvent(new Event("input"));
+    });
+    $("chips").appendChild(b);
+  });
+  $("btnTextoOriginal").addEventListener("click", function () {
+    confirmar("¿Volver al texto original?", "Se reemplazarán el título, el texto, el nombre y cargo de quien firma y el inicio del código por los del modelo original.", "Sí, volver al original")
+      .then(function (ok) {
+        if (!ok) return;
+        estado.plantilla = copia(PLANTILLA_ORIGINAL);
+        cargarTextoEnForm(); guardar(); pintarTodo(); aviso("Texto original restaurado.");
+      });
+  });
+
+  /* ===== Logo y firma ===== */
+  function cargarImagen(input, errId, clave, nombre) {
+    input.addEventListener("change", function () {
+      var arch = input.files && input.files[0], err = $(errId);
+      input.value = "";
+      err.textContent = "";
+      if (!arch) return;
+      if (!/^image\/(png|jpeg|webp)$/.test(arch.type)) { err.textContent = "El archivo debe ser una imagen PNG o JPG."; return; }
+      if (arch.size > 1.5 * 1024 * 1024) { err.textContent = "La imagen pesa " + numeroTexto(Math.round(arch.size / 104857.6) / 10) + " MB. Use una de máximo 1.5 MB."; return; }
+      var lector = new FileReader();
+      lector.onload = function () {
+        var prueba = new Image();
+        prueba.onload = function () {
+          estado[clave] = lector.result;
+          guardar(); pintarTodo(); aviso(nombre + " actualizado.");
+        };
+        prueba.onerror = function () { err.textContent = "No se pudo abrir la imagen. Pruebe con otro archivo."; };
+        prueba.src = lector.result;
+      };
+      lector.onerror = function () { err.textContent = "No se pudo leer el archivo."; };
+      lector.readAsDataURL(arch);
+    });
+  }
+  cargarImagen($("archLogo"), "errLogo", "logo", "Logo");
+  cargarImagen($("archFirma"), "errFirma", "firma", "Firma");
+  $("btnLogoOrig").addEventListener("click", function () {
+    confirmar("¿Usar el logo original?", "Se quitará el logo que cargó y se volverá a usar el logo de Comercial Los Andes.", "Sí, usar el original")
+      .then(function (ok) { if (ok) { estado.logo = null; guardar(); pintarTodo(); } });
+  });
+  $("btnFirmaOrig").addEventListener("click", function () {
+    confirmar("¿Usar la firma original?", "Se quitará la firma que cargó y se volverá a usar la firma original.", "Sí, usar la original")
+      .then(function (ok) { if (ok) { estado.firma = null; guardar(); pintarTodo(); } });
+  });
+
+  /* ===== Vista previa: navegación ===== */
+  $("selPrevia").addEventListener("change", function () { previaIdx = +this.value; pintarPrevia(); });
+  function moverPrevia(d) {
+    var l = aprobadosIdx(), p = l.indexOf(previaIdx) + d;
+    if (p >= 0 && p < l.length) { previaIdx = l[p]; pintarPrevia(); }
+  }
+  $("btnAnt").addEventListener("click", function () { moverPrevia(-1); });
+  $("btnSig").addEventListener("click", function () { moverPrevia(1); });
+
+  /* ===== Imprimir ===== */
+  function errorImprimir(msg) {
+    document.querySelectorAll("[data-error-imprimir]").forEach(function (e) { e.textContent = msg; });
+  }
+  document.querySelectorAll("[data-imprimir]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      errorImprimir("");
+      if (!revisarTexto()) {
+        errorImprimir("Hay un error en el texto del certificado (paso 4). Corríjalo antes de imprimir.");
+        $("secTexto").scrollIntoView({ behavior: "smooth", block: "start" });
+        return;
+      }
+      var lista = aprobadosIdx(), cods = codigos();
+      if (!lista.length) { errorImprimir("No hay participantes aprobados (nota 14 o más). No hay certificados para imprimir."); return; }
+      var area = $("areaImpresion");
+      area.innerHTML = "";
+      var certs = lista.map(function (i) { var c = crearCertificado(estado.participantes[i], cods[i]); area.appendChild(c); return c; });
+      esperarImagenes(area).then(function () {
+        certs.forEach(ajustarCertificado);
+        window.print();
+      });
+    });
+  });
+
+  /* ===== Copia de seguridad ===== */
+  $("btnDescargar").addEventListener("click", function () {
+    $("errCopia").textContent = "";
+    var datos = { aplicacion: "Generador de Certificados - Comercial Los Andes", version: 1, creado: new Date().toISOString(), datos: estado };
+    var blob = new Blob([JSON.stringify(datos, null, 2)], { type: "application/json" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "Copia_Certificados_" + hoyTexto() + ".json";
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
+    aviso("Copia de seguridad descargada.");
+  });
+  $("archCopia").addEventListener("change", function () {
+    var input = this, arch = input.files && input.files[0], err = $("errCopia");
+    input.value = ""; err.textContent = "";
+    if (!arch) return;
+    if (!/\.json$/i.test(arch.name)) { err.textContent = "El archivo debe ser una copia de seguridad descargada desde esta aplicación (termina en .json)."; return; }
+    var lector = new FileReader();
+    lector.onload = function () {
+      var d;
+      try { d = JSON.parse(lector.result); } catch (e) { err.textContent = "El archivo está dañado o no es una copia de seguridad de esta aplicación."; return; }
+      var datos = d && d.datos ? d.datos : d;
+      var ok = estadoValido(datos);
+      if (ok !== true) { err.textContent = "No se puede cargar: " + ok; return; }
+      confirmar("¿Cargar la copia de seguridad?", "La copia tiene " + datos.participantes.length + " participantes.\n\nSe reemplazarán todos los datos actuales (lista, texto, firma y logo) por los de la copia.", "Sí, cargar copia")
+        .then(function (si) {
+          if (!si) return;
+          estado = completar(datos); terminarEdicion(); previaIdx = -1;
+          cargarTextoEnForm(); guardar(); pintarTodo();
+          aviso("Copia de seguridad cargada.");
+        });
+    };
+    lector.onerror = function () { err.textContent = "No se pudo leer el archivo."; };
+    lector.readAsText(arch);
+  });
+
+  /* ===== Inicio ===== */
+  cargarGuardado();
+  cargarTextoEnForm();
+  pintarTodo();
+  guardar();
+})();
+</script>
+</body>
+</html>
