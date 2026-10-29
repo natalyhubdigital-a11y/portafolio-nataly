@@ -430,7 +430,8 @@ function guardarDB() {
     avisoLleno = false;
     return true;
   } catch (e) {
-    if (!almacenOK) { $("#banner-almacen").hidden = false; return false; }
+    // Sin almacenamiento (modo privado): se sigue trabajando en memoria; el aviso rojo ya lo explica
+    if (!almacenOK) { $("#banner-almacen").hidden = false; return true; }
     if (!avisoLleno) {
       avisoLleno = true;
       confirmar({
