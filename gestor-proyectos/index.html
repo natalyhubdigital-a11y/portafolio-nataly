@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gestor de Proyectos</title>
+  <link rel="stylesheet" href="styles.css">
+  <!-- SheetJS: única dependencia, para exportar a .xlsx -->
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+
+  <!-- ===== Acceso ===== -->
+  <section id="login" class="login" hidden>
+    <form id="login-form" class="login-card">
+      <h1>Gestor de Proyectos</h1>
+      <p class="muted">Inicia sesión para continuar</p>
+
+      <label>Usuario
+        <input id="login-user" type="text" autocomplete="username" required>
+      </label>
+      <label>Contraseña
+        <input id="login-pass" type="password" autocomplete="current-password" required>
+      </label>
+      <p id="login-error" class="error" hidden>Usuario o contraseña incorrectos.</p>
+      <button type="submit" class="btn btn-primary btn-block">Entrar</button>
+
+      <div class="notice">
+        <strong>Uso local para una sola persona.</strong>
+        Esta aplicación funciona en el navegador de este dispositivo. La información se guarda
+        únicamente en este navegador y <strong>no se sincroniza</strong> con otros dispositivos.
+        Si borras los datos del navegador, se perderán; descarga un Excel como respaldo.
+      </div>
+    </form>
+  </section>
+
+  <!-- ===== Aplicación ===== -->
+  <div id="app" hidden>
+    <header class="topbar">
+      <div class="brand">Gestor de Proyectos</div>
+      <nav class="tabs" id="tabs">
+        <button data-view="resumen" class="tab active">Resumen</button>
+        <button data-view="tareas" class="tab">Tareas</button>
+        <button data-view="calendario" class="tab">Calendario</button>
+        <button data-view="reportes" class="tab">Reportes</button>
+      </nav>
+      <button id="logout" class="btn btn-ghost">Cerrar sesión</button>
+    </header>
+
+    <main class="container">
+
+      <!-- Resumen -->
+      <section id="view-resumen" class="view">
+        <div class="view-head">
+          <h2>Resumen</h2>
+          <button class="btn btn-primary" data-action="nueva">+ Nueva tarea</button>
+        </div>
+        <div class="stats" id="stats"></div>
+        <div class="card">
+          <div class="progress-label">
+            <span>Avance general</span><strong id="pct-label">0%</strong>
+          </div>
+          <div class="progress"><div id="pct-bar"></div></div>
+        </div>
+        <div class="card">
+          <h3>Por proyecto</h3>
+          <div id="by-project"></div>
+        </div>
+      </section>
+
+      <!-- Tareas -->
+      <section id="view-tareas" class="view" hidden>
+        <div class="view-head">
+          <h2>Tareas</h2>
+          <button class="btn btn-primary" data-action="nueva">+ Nueva tarea</button>
+        </div>
+
+        <div class="filters card">
+          <label>Proyecto <select id="f-proyecto"></select></label>
+          <label>Responsable <select id="f-responsable"></select></label>
+          <label>Estado
+            <select id="f-estado">
+              <option value="">Todos</option>
+              <option>Pendiente</option>
+              <option>En proceso</option>
+              <option>Completada</option>
+            </select>
+          </label>
+          <button id="f-limpiar" class="btn btn-ghost">Limpiar filtros</button>
+        </div>
+
+        <div class="segmented">
+          <button data-mode="tabla" class="seg active">Tabla</button>
+          <button data-mode="kanban" class="seg">Kanban</button>
+        </div>
+
+        <div id="tabla-wrap" class="card table-wrap">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Proyecto</th><th>Tarea</th><th>Responsable</th><th>Fecha límite</th>
+                <th>Prioridad</th><th>Estado</th><th></th>
+              </tr>
+            </thead>
+            <tbody id="tabla-body"></tbody>
+          </table>
+          <p id="tabla-vacia" class="empty" hidden>No hay tareas con estos filtros.</p>
+        </div>
+
+        <div id="kanban" class="kanban" hidden></div>
+      </section>
+
+      <!-- Calendario -->
+      <section id="view-calendario" class="view" hidden>
+        <div class="view-head">
+          <h2>Calendario</h2>
+          <div class="cal-nav">
+            <button id="cal-prev" class="btn btn-ghost" aria-label="Mes anterior">‹</button>
+            <strong id="cal-title"></strong>
+            <button id="cal-next" class="btn btn-ghost" aria-label="Mes siguiente">›</button>
+            <button id="cal-hoy" class="btn btn-ghost">Hoy</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="cal-grid cal-weekdays">
+            <div>Lun</div><div>Mar</div><div>Mié</div><div>Jue</div><div>Vie</div><div>Sáb</div><div>Dom</div>
+          </div>
+          <div class="cal-grid" id="cal-grid"></div>
+        </div>
+      </section>
+
+      <!-- Reportes -->
+      <section id="view-reportes" class="view" hidden>
+        <div class="view-head">
+          <h2>Reportes</h2>
+        </div>
+        <div class="card">
+          <div class="report-controls">
+            <label>Proyecto <select id="r-proyecto"></select></label>
+          </div>
+          <textarea id="r-texto" class="report-text" rows="16" readonly></textarea>
+          <div class="actions">
+            <button id="r-copiar" class="btn btn-primary">Copiar reporte</button>
+            <button id="r-whatsapp" class="btn btn-whatsapp">Enviar por WhatsApp</button>
+            <button id="r-correo" class="btn btn-secondary">Enviar por correo</button>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Exportar datos</h3>
+          <p class="muted">Descarga todas las tareas registradas (sin aplicar filtros) en un archivo Excel.</p>
+          <button id="r-excel" class="btn btn-secondary">Descargar Excel (.xlsx)</button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- ===== Formulario de tarea ===== -->
+  <dialog id="modal" class="modal">
+    <form id="task-form" method="dialog">
+      <h3 id="modal-title">Nueva tarea</h3>
+      <input type="hidden" id="t-id">
+      <div class="form-grid">
+        <label>Proyecto
+          <input id="t-proyecto" list="lista-proyectos" required>
+          <datalist id="lista-proyectos"></datalist>
+        </label>
+        <label>Nombre de la tarea
+          <input id="t-nombre" required>
+        </label>
+        <label>Responsable
+          <input id="t-responsable" list="lista-responsables" required>
+          <datalist id="lista-responsables"></datalist>
+        </label>
+        <label>Fecha límite
+          <input id="t-fecha" type="date" required>
+        </label>
+        <label>Prioridad
+          <select id="t-prioridad">
+            <option>Alta</option><option selected>Media</option><option>Baja</option>
+          </select>
+        </label>
+        <label>Estado
+          <select id="t-estado">
+            <option>Pendiente</option><option>En proceso</option><option>Completada</option>
+          </select>
+        </label>
+        <label class="full">Notas
+          <textarea id="t-notas" rows="3"></textarea>
+        </label>
+      </div>
+      <div class="modal-actions">
+        <button type="button" id="t-eliminar" class="btn btn-danger">Eliminar</button>
+        <span class="spacer"></span>
+        <button type="button" id="t-cancelar" class="btn btn-ghost">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Guardar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast" hidden></div>
+</body>
+</html>
